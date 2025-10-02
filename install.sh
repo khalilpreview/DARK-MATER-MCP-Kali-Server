@@ -263,6 +263,8 @@ Group=$SERVICE_USER
 WorkingDirectory=$INSTALL_DIR
 ExecStart=$INSTALL_DIR/venv/bin/python $INSTALL_DIR/kali_server.py --bind 0.0.0.0:5000
 ExecReload=/bin/kill -HUP \$MAINPID
+Environment="PATH=$INSTALL_DIR/venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="NGROK_AUTHTOKEN="
 Restart=on-failure
 RestartSec=5
 StartLimitInterval=60
@@ -353,6 +355,16 @@ display_enrollment_info() {
     log_info "1. Use the enrollment JSON above to register this server"
     log_info "2. Configure scope settings in $CONFIG_DIR/scope.json if needed"
     log_info "3. Test the server with: curl http://localhost:5000/status"
+    echo
+    log_info "=== NGROK SETUP (OPTIONAL) ==="
+    echo
+    log_info "For remote access via ngrok tunnel:"
+    log_info "1. Get ngrok auth token from https://dashboard.ngrok.com/get-started/your-authtoken"
+    log_info "2. Edit /etc/systemd/system/$SERVICE_NAME.service"
+    log_info "3. Set Environment=\"NGROK_AUTHTOKEN=your_token_here\""
+    log_info "4. Add --ngrok flag to ExecStart command"
+    log_info "5. Run: systemctl daemon-reload && systemctl restart $SERVICE_NAME"
+    log_info "6. Check tunnel URL in service logs: journalctl -u $SERVICE_NAME -f"
     echo
 }
 

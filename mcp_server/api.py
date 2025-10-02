@@ -22,6 +22,7 @@ from .tools import list_tools, call_tool
 from .artifacts import list_artifacts, read_artifact
 from .memory import search_memory, get_observation_stats
 from .scope import get_scope_info
+from .ngrok_manager import get_ngrok_info, get_ngrok_metrics
 
 logger = logging.getLogger(__name__)
 
@@ -311,6 +312,46 @@ async def scope_config_endpoint(server_creds: ServerCredentials = Depends(requir
             detail="Failed to retrieve scope configuration"
         )
 
+# Ngrok endpoints
+@app.get("/ngrok/info")
+async def ngrok_info_endpoint(server_creds: ServerCredentials = Depends(require_api_key)):
+    """
+    Get ngrok tunnel information.
+    
+    Returns current tunnel status and public URL.
+    """
+    try:
+        ngrok_info = get_ngrok_info()
+        return ngrok_info
+        
+    except Exception as e:
+        logger.error(f"Ngrok info error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve ngrok information"
+        )
+
+@app.get("/ngrok/metrics")
+async def ngrok_metrics_endpoint(server_creds: ServerCredentials = Depends(require_api_key)):
+    """
+    Get ngrok tunnel metrics.
+    
+    Returns connection and traffic statistics if available.
+    """
+    try:
+        metrics = get_ngrok_metrics()
+        if metrics:
+            return metrics
+        else:
+            return {"message": "Metrics not available"}
+        
+    except Exception as e:
+        logger.error(f"Ngrok metrics error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve ngrok metrics"
+        )
+
 # Server information endpoint
 @app.get("/info")
 async def server_info_endpoint(server_creds: ServerCredentials = Depends(require_api_key)):
@@ -329,6 +370,9 @@ async def server_info_endpoint(server_creds: ServerCredentials = Depends(require
         # Get scope info
         scope_info = get_scope_info()
         
+        # Get ngrok info
+        ngrok_info = get_ngrok_info()
+        
         return {
             "server_id": server_creds.server_id,
             "label": server_creds.label,
@@ -337,6 +381,7 @@ async def server_info_endpoint(server_creds: ServerCredentials = Depends(require
             "artifacts_count": artifacts_info.get("total", 0),
             "scope_config": scope_info,
             "available_tools": len(list_tools()),
+            "ngrok_tunnel": ngrok_info,
             "server_time": datetime.now(timezone.utc).isoformat()
         }
         

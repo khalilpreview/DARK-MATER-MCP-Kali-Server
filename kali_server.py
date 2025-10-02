@@ -12,6 +12,8 @@ import logging
 import os
 import sys
 import ssl
+import signal
+import atexit
 from pathlib import Path
 
 import uvicorn
@@ -26,8 +28,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Import the FastAPI app
+# Import the FastAPI app and ngrok manager
 from mcp_server.api import app
+from mcp_server.ngrok_manager import NgrokManager
 
 def get_tls_config():
     """
@@ -85,6 +88,21 @@ def parse_args():
         default=1,
         help="Number of worker processes (default: 1)"
     )
+    parser.add_argument(
+        "--ngrok",
+        action="store_true",
+        help="Enable ngrok tunnel for remote access"
+    )
+    parser.add_argument(
+        "--ngrok-authtoken",
+        type=str,
+        help="Ngrok auth token (can also use NGROK_AUTHTOKEN env var)"
+    )
+    parser.add_argument(
+        "--ngrok-domain",
+        type=str,
+        help="Custom ngrok domain (requires paid plan)"
+    )
     return parser.parse_args()
 
 def main():
@@ -110,6 +128,40 @@ def main():
     except ValueError:
         logger.error(f"Invalid bind address: {args.bind}")
         sys.exit(1)
+    
+    # Initialize ngrok manager if requested
+    ngrok_manager = None
+    if args.ngrok:
+        # Get auth token from args or environment
+        auth_token = args.ngrok_authtoken or os.environ.get("NGROK_AUTHTOKEN")
+        if not auth_token:
+            logger.error("Ngrok auth token required. Use --ngrok-authtoken or set NGROK_AUTHTOKEN env var")
+            sys.exit(1)
+        
+        try:
+            ngrok_manager = NgrokManager(auth_token=auth_token)
+            
+            # Setup cleanup handlers
+            def cleanup_ngrok():
+                if ngrok_manager:
+                    logger.info("Shutting down ngrok tunnel...")
+                    ngrok_manager.disconnect()
+            
+            atexit.register(cleanup_ngrok)
+            signal.signal(signal.SIGTERM, lambda s, f: cleanup_ngrok())
+            signal.signal(signal.SIGINT, lambda s, f: cleanup_ngrok())
+            
+            # Start tunnel
+            tunnel_config = {}
+            if args.ngrok_domain:
+                tunnel_config["domain"] = args.ngrok_domain
+            
+            public_url = ngrok_manager.connect(port, **tunnel_config)
+            logger.info(f"Ngrok tunnel established: {public_url}")
+            
+        except Exception as e:
+            logger.error(f"Failed to setup ngrok tunnel: {e}")
+            sys.exit(1)
     
     # Get TLS configuration
     ssl_keyfile, ssl_certfile, ssl_ca_certs = get_tls_config()
@@ -152,8 +204,12 @@ def main():
         uvicorn.run(**uvicorn_config)
     except KeyboardInterrupt:
         logger.info("Server shutdown requested")
+        if ngrok_manager:
+            ngrok_manager.disconnect()
     except Exception as e:
         logger.error(f"Server error: {e}")
+        if ngrok_manager:
+            ngrok_manager.disconnect()
         sys.exit(1)
 
 if __name__ == "__main__":

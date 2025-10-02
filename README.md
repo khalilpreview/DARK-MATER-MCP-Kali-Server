@@ -12,6 +12,7 @@ A production-ready Model Context Protocol (MCP) server for security testing with
 - 🌐 **HTTP API**: RESTful endpoints for dashboard integration
 - 🔧 **Systemd Integration**: Production-ready service with automatic startup
 - 🔒 **Optional TLS/mTLS**: Support for encrypted connections
+- 🌐 **Ngrok Tunneling**: Remote access without port forwarding
 
 ## Quick Start
 
@@ -36,6 +37,42 @@ The installer will:
 - Set up systemd service
 - Generate enrollment token
 - Display enrollment JSON for copying
+
+### Optional: Enable Ngrok Tunneling
+
+For remote access without port forwarding:
+
+1. **Get ngrok auth token** from [ngrok dashboard](https://dashboard.ngrok.com/get-started/your-authtoken)
+
+2. **Configure the service**:
+   ```bash
+   sudo systemctl edit mcp-kali-server
+   ```
+   Add:
+   ```ini
+   [Service]
+   Environment="NGROK_AUTHTOKEN=your_token_here"
+   ExecStart=
+   ExecStart=/opt/mcp-kali-server/venv/bin/# Run in development mode
+python kali_server.py --debug --bind 127.0.0.1:8000
+
+# Run with ngrok tunnel for testing
+python kali_server.py --debug --bind 127.0.0.1:8000 --ngrok --ngrok-authtoken YOUR_TOKEN
+```
+
+### Adding New Tools
+   ```
+
+3. **Restart the service**:
+   ```bash
+   sudo systemctl daemon-reload
+   sudo systemctl restart mcp-kali-server
+   ```
+
+4. **Get the public URL**:
+   ```bash
+   sudo journalctl -u mcp-kali-server -f | grep "tunnel established"
+   ```
 
 ### Enrollment
 
