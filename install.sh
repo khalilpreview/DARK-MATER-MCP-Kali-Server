@@ -144,8 +144,7 @@ create_directories() {
     mkdir -p "$DATA_DIR/artifacts"
     mkdir -p "$DATA_DIR/memory"
     
-    # Set ownership
-    chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+    # Set ownership for data directories (install dir will be handled after cloning)
     chown -R "$SERVICE_USER:$SERVICE_USER" "$DATA_DIR"
     chown root:root "$CONFIG_DIR"
     
@@ -156,6 +155,12 @@ create_directories() {
 setup_repository() {
     log_info "Setting up repository..."
     
+    # Verify user exists
+    if ! id "$SERVICE_USER" &>/dev/null; then
+        log_error "Service user $SERVICE_USER does not exist"
+        exit 1
+    fi
+    
     if [[ -d "$INSTALL_DIR/.git" ]]; then
         log_info "Repository exists, updating..."
         cd "$INSTALL_DIR"
@@ -164,9 +169,22 @@ setup_repository() {
         log_success "Repository updated"
     else
         log_info "Cloning repository..."
+        # Remove existing directory if it exists
         rm -rf "$INSTALL_DIR"
-        sudo -u "$SERVICE_USER" git clone "$REPO_URL" "$INSTALL_DIR"
-        log_success "Repository cloned"
+        
+        # Create parent directory and set permissions
+        mkdir -p "$(dirname "$INSTALL_DIR")"
+        
+        # Clone as root first, then change ownership
+        if git clone "$REPO_URL" "$INSTALL_DIR"; then
+            # Set ownership after cloning
+            chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+            log_success "Repository cloned"
+        else
+            log_error "Failed to clone repository from $REPO_URL"
+            log_info "You may need to check your internet connection or repository access"
+            exit 1
+        fi
     fi
     
     # Make scripts executable
