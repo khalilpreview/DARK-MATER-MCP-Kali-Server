@@ -282,9 +282,10 @@ EOF
 
 # Create systemd service
 create_service() {
-    log_info "Creating systemd service..."
-    
-    cat > "/etc/systemd/system/$SERVICE_NAME.service" <<EOF
+    if check_systemd; then
+        log_info "Creating systemd service..."
+        
+        cat > "/etc/systemd/system/$SERVICE_NAME.service" <<EOF
 [Unit]
 Description=MCP Kali Server
 Documentation=https://github.com/khalilpreview/MCP-Kali-Server

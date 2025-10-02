@@ -139,7 +139,10 @@ def main():
             sys.exit(1)
         
         try:
-            ngrok_manager = NgrokManager(auth_token=auth_token)
+            ngrok_manager = NgrokManager()
+            if not ngrok_manager.configure_ngrok(auth_token):
+                logger.error("Failed to configure ngrok with provided auth token")
+                sys.exit(1)
             
             # Setup cleanup handlers
             def cleanup_ngrok():

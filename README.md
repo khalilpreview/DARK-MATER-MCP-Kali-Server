@@ -8,7 +8,32 @@ A production-ready Model Context Protocol (MCP) server for security testing with
 - 🛡️ **Schema Validation**: JSON Schema validation for all tool arguments
 - 🎯 **Scope & Guardrails**: CIDR-based targeting with destructive operation controls
 - 📦 **Artifact Storage**: Automatic storage and parsing of tool outputs with summaries
-- 🧠 **Memory Hooks**: Lightweight observation recording for analysis patterns
+- 🧠 **Memo#### **Recent Fix**: If you encountered "syntax error near unexpected token `else'" during installation, this has been resolved. The installer now properly detects systemd environments and gracefully handles non-systemd systems (Docker, WSL, chroot).
+
+#### **Ngrok Setup Issues**
+If you encounter ngrok-related errors:
+
+1. **Install ngrok manually**:
+   ```bash
+   # Run the ngrok setup script
+   bash setup_ngrok.sh
+   
+   # Or install manually
+   curl -sSL "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip" -o ngrok.zip
+   unzip ngrok.zip
+   sudo mv ngrok /usr/local/bin/
+   sudo chmod +x /usr/local/bin/ngrok
+   ```
+
+2. **Run server without ngrok** (works perfectly):
+   ```bash
+   # Start server locally only
+   /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000
+   
+   # Or use the CLI tool without ngrok
+   sudo dark-mater_kali-mcp start-server
+   # Just press Enter to skip ngrok token
+   ```y Hooks**: Lightweight observation recording for analysis patterns
 - 🌐 **HTTP API**: RESTful endpoints for DARK MATER MCP Client integration
 - 🔧 **Systemd Integration**: Production-ready service with automatic startup
 - 🔒 **Optional TLS/mTLS**: Support for encrypted connections
@@ -99,6 +124,44 @@ The `dark-mater_kali-mcp` CLI tool provides comprehensive server management:
 - 📋 **Real-time enrollment status** and server information
 - 🎛️ **Interactive control panel** with multiple options:
   - Server status monitoring
+
+## Server Management Commands
+
+### Check if Server is Running
+```bash
+# Check server process
+ps aux | grep kali_server | grep -v grep
+
+# Test server connectivity
+curl -sS http://localhost:5000/health
+
+# Check server port
+netstat -tlnp | grep :5000
+```
+
+### View Server Logs
+```bash
+# View live logs
+tail -f /var/log/mcp-kali-server.log
+
+# View last 50 lines
+tail -50 /var/log/mcp-kali-server.log
+
+# Search for errors
+grep ERROR /var/log/mcp-kali-server.log
+```
+
+### Manual Server Control
+```bash
+# Start server (without ngrok)
+/opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000
+
+# Start server in background
+nohup /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000 > /var/log/mcp-kali-server.log 2>&1 &
+
+# Kill server process
+pkill -f kali_server.py
+```
   - Server restart functionality
   - Log viewing capabilities
   - Health testing
@@ -628,6 +691,8 @@ If `curl -sSL ... | sudo bash` fails with syntax errors:
    ```
 
 2. **Use manual installation** (see Option 2 above)
+
+> **Recent Fix**: If you encountered "syntax error near unexpected token `else'" during installation, this has been resolved. The installer now properly detects systemd environments and gracefully handles non-systemd systems (Docker, WSL, chroot).
 
 #### **Permission Denied on Git Clone**
 ```bash
