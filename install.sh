@@ -11,21 +11,7 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_NAME="$(basename "$0")"
-INS# Check if systemd is available
-check_systemd() {
-    if [[ $(ps -p 1 -o comm= 2>/dev/null) == "systemd" ]]; then
-        return 0  # systemd is available
-    else
-        return 1  # systemd is not available
-    fi
-}
-
-# Create systemd service
-create_service() {
-    if check_systemd; then
-        log_info "Creating systemd service..."
-        
-        cat > "/etc/systemd/system/$SERVICE_NAME.service" << EOFDIR="/opt/mcp-kali-server"
+INSTALL_DIR="/opt/mcp-kali-server"
 CONFIG_DIR="/etc/mcp-kali"
 DATA_DIR="/var/lib/mcp"
 SERVICE_USER="mcpserver"
@@ -129,6 +115,15 @@ install_dependencies() {
         python3-requests
     
     log_success "System dependencies installed"
+}
+
+# Check if systemd is available
+check_systemd() {
+    if [[ $(ps -p 1 -o comm= 2>/dev/null) == "systemd" ]]; then
+        return 0  # systemd is available
+    else
+        return 1  # systemd is not available
+    fi
 }
 
 # Create service user

@@ -18,6 +18,7 @@ A production-ready Model Context Protocol (MCP) server for security testing with
 
 ### Easy Installation & Startup
 
+#### **Option 1: Automated Installation** (Recommended)
 1. **Install the server** (requires root):
    ```bash
    curl -sSL https://raw.githubusercontent.com/khalilpreview/MCP-Kali-Server/main/install.sh | sudo bash
@@ -27,8 +28,60 @@ A production-ready Model Context Protocol (MCP) server for security testing with
    ```bash
    sudo dark-mater_kali-mcp start-server
    ```
+
+#### **Option 2: Manual Installation** (If online installer has issues)
+1. **Clone the repository**:
+   ```bash
+   # Create directories and user
+   sudo useradd --system --home-dir /opt/mcp-kali-server --shell /bin/false mcpserver
+   sudo mkdir -p /opt/mcp-kali-server
+   sudo chown -R mcpserver:mcpserver /opt/mcp-kali-server
    
-   The CLI provides:
+   # Clone repository
+   sudo -u mcpserver git clone https://github.com/khalilpreview/MCP-Kali-Server.git /opt/mcp-kali-server
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   # System dependencies
+   sudo apt-get update
+   sudo apt-get install -y python3-pip python3-venv python3-dev build-essential git curl nmap sqlite3 ca-certificates python3-requests
+   
+   # Python environment
+   sudo -u mcpserver python3 -m venv /opt/mcp-kali-server/venv
+   sudo -u mcpserver /opt/mcp-kali-server/venv/bin/pip install -r /opt/mcp-kali-server/requirements.txt
+   ```
+
+3. **Setup configuration**:
+   ```bash
+   # Create config directories
+   sudo mkdir -p /etc/mcp-kali /var/lib/mcp/{artifacts,memory}
+   sudo chown -R mcpserver:mcpserver /var/lib/mcp
+   
+   # Generate enrollment token
+   sudo python3 -c "
+   import json, secrets, socket, datetime
+   server_id = f'kali-{socket.gethostname()}-{int(datetime.datetime.now().timestamp())}'
+   token = secrets.token_urlsafe(32)
+   data = {'id': server_id, 'token': token, 'created': datetime.datetime.now().isoformat()}
+   with open('/etc/mcp-kali/enroll.json', 'w') as f: json.dump(data, f)
+   print('Enrollment token created:', data)
+   "
+   
+   # Create scope config
+   echo '{"allowed_cidrs":["10.0.0.0/8","192.168.0.0/16","172.16.0.0/12"],"allow_destructive":false}' | sudo tee /etc/mcp-kali/scope.json
+   
+   # Install CLI tool globally
+   sudo chmod +x /opt/mcp-kali-server/dark-mater_kali-mcp
+   sudo ln -sf /opt/mcp-kali-server/dark-mater_kali-mcp /usr/local/bin/dark-mater_kali-mcp
+   ```
+
+4. **Start the server**:
+   ```bash
+   sudo dark-mater_kali-mcp start-server
+   ```
+
+#### **CLI Features:**
    - 🎨 **DARK MATER ASCII banner**
    - 🌐 **Interactive ngrok setup** (optional)
    - 🚀 **Automatic server startup**
@@ -90,13 +143,20 @@ sudo systemctl status mcp-kali-server
 sudo systemctl enable mcp-kali-server
 ```
 
-#### **🚀 Direct Execution** (Development)
+#### **🚀 Direct Execution** (Development/Non-systemd)
 ```bash
 # Run directly (foreground)
-sudo /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000
+/opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000
 
-# With ngrok tunnel
-sudo /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000 --ngrok --ngrok-authtoken YOUR_TOKEN
+# Background with logging
+nohup /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000 > /var/log/mcp-kali-server.log 2>&1 &
+
+# With ngrok tunnel (background)
+export NGROK_AUTHTOKEN=your_token_here
+nohup /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000 --ngrok > /var/log/mcp-kali-server.log 2>&1 &
+
+# Check logs
+tail -f /var/log/mcp-kali-server.log
 ```
 
 ### Alternative: Manual Installation
@@ -551,6 +611,37 @@ sudo -u mcpserver git clone git@github.com:khalilpreview/MCP-Kali-Server.git /op
 # Create virtual environment and install dependencies
 sudo -u mcpserver python3 -m venv /opt/mcp-kali-server/venv
 sudo -u mcpserver /opt/mcp-kali-server/venv/bin/pip install -r /opt/mcp-kali-server/requirements.txt
+```
+
+## Troubleshooting Installation
+
+### Common Issues
+
+#### **Online Installer Fails**
+If `curl -sSL ... | sudo bash` fails with syntax errors:
+
+1. **Download and inspect** the installer first:
+   ```bash
+   curl -sSL https://raw.githubusercontent.com/khalilpreview/MCP-Kali-Server/main/install.sh -o install.sh
+   sudo chmod +x install.sh
+   sudo ./install.sh
+   ```
+
+2. **Use manual installation** (see Option 2 above)
+
+#### **Permission Denied on Git Clone**
+```bash
+# Fix: Create directory with proper ownership first
+sudo mkdir -p /opt/mcp-kali-server
+sudo chown -R mcpserver:mcpserver /opt/mcp-kali-server
+sudo -u mcpserver git clone https://github.com/khalilpreview/MCP-Kali-Server.git /opt/mcp-kali-server
+```
+
+#### **CLI Tool Not Found**
+```bash
+# Fix: Create symlink manually
+sudo ln -sf /opt/mcp-kali-server/dark-mater_kali-mcp /usr/local/bin/dark-mater_kali-mcp
+sudo chmod +x /usr/local/bin/dark-mater_kali-mcp
 ```
 
 ### Running Without Systemd
