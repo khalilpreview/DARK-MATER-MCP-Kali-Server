@@ -1,60 +1,119 @@
 # DARK MATER | MCP Kali Server v2.0
 
-A production-ready Model Context Protocol (MCP) server for security testing with Kali Linux tools. Features enrollment-based authentication, schema-validated tool execution, artifact storage with auto-parsing, memory hooks, and comprehensive guardrails.
+<div align="center">
+  <img src="https://raw.githubusercontent.com/khalilpreview/M7yapp9sColl3c1oncdn/refs/heads/main/image%20(35).png" alt="DARK MATER MCP Kali Server" width="100%" />
+</div>
 
-## Features
+<div align="center">
+  <h3>🔒 Production-Ready Security Testing Platform</h3>
+  <p>A powerful Model Context Protocol (MCP) server for security testing with Kali Linux tools</p>
+  
+  <!-- Technology Stack -->
+  <p>
+    <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+    <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
+    <img src="https://img.shields.io/badge/Kali_Linux-557C94?style=for-the-badge&logo=kalilinux&logoColor=white" alt="Kali Linux" />
+    <img src="https://img.shields.io/badge/ngrok-140648?style=for-the-badge&logo=ngrok&logoColor=white" alt="ngrok" />
+    <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" alt="Docker" />
+    <img src="https://img.shields.io/badge/systemd-231F20?style=for-the-badge&logo=linux&logoColor=white" alt="systemd" />
+  </p>
+  
+  <!-- Status Badges -->
+  <p>
+    <img src="https://img.shields.io/badge/Version-2.0-brightgreen?style=flat-square" alt="Version" />
+    <img src="https://img.shields.io/badge/Status-Production%20Ready-success?style=flat-square" alt="Status" />
+    <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/badge/Security-Tested-orange?style=flat-square" alt="Security" />
+  </p>
+</div>
 
-- 🔐 **Enrollment & API Key Authentication**: Secure server enrollment with bearer token auth
-- 🛡️ **Schema Validation**: JSON Schema validation for all tool arguments
-- 🎯 **Scope & Guardrails**: CIDR-based targeting with destructive operation controls
-- 📦 **Artifact Storage**: Automatic storage and parsing of tool outputs with summaries
-- 🧠 **Memo#### **Recent Fix**: If you encountered "syntax error near unexpected token `else'" during installation, this has been resolved. The installer now properly detects systemd environments and gracefully handles non-systemd systems (Docker, WSL, chroot).
+---
 
-#### **Ngrok Setup Issues**
-If you encounter ngrok-related errors:
+## 🚀 **Key Features**
 
-1. **Install ngrok manually**:
-   ```bash
-   # Run the ngrok setup script
-   bash setup_ngrok.sh
-   
-   # Or install manually
-   curl -sSL "https://bin.equinox.io/c/bNyj1mQVY4c/ngrok-v3-stable-linux-amd64.zip" -o ngrok.zip
-   unzip ngrok.zip
-   sudo mv ngrok /usr/local/bin/
-   sudo chmod +x /usr/local/bin/ngrok
-   ```
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/96/000000/security-shield-green.png" alt="Security" width="64"/>
+        <h4>🔐 Secure Authentication</h4>
+        <p>Enrollment-based API key system with bearer token authentication</p>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/96/000000/api-settings.png" alt="API" width="64"/>
+        <h4>🛡️ Schema Validation</h4>
+        <p>JSON Schema validation for all tool arguments and responses</p>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/96/000000/target.png" alt="Targeting" width="64"/>
+        <h4>🎯 Smart Guardrails</h4>
+        <p>CIDR-based targeting with destructive operation controls</p>
+      </td>
+    </tr>
+    <tr>
+      <td align="center">
+        <img src="https://img.icons8.com/color/96/000000/archive.png" alt="Storage" width="64"/>
+        <h4>📦 Artifact Storage</h4>
+        <p>Automatic storage and parsing of tool outputs with summaries</p>
+      </td>
+      <td align="center">
+        <img src="https://img.icons8.com/color/96/000000/brain.png" alt="Memory" width="64"/>
+        <h4>🧠 Memory Hooks</h4>
+        <p>Lightweight observation recording for analysis patterns</p>
+      </td>
+      <td align="center">
+        <img src="https://img.icons8.com/color/96/000000/network.png" alt="Network" width="64"/>
+        <h4>🌐 Remote Access</h4>
+        <p>Ngrok tunneling support for secure remote connectivity</p>
+      </td>
+    </tr>
+  </table>
+</div>
 
-2. **Run server without ngrok** (works perfectly):
-   ```bash
-   # Start server locally only
-   /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000
-   
-   # Or use the CLI tool without ngrok
-   sudo dark-mater_kali-mcp start-server
-   # Just press Enter to skip ngrok token
-   ```y Hooks**: Lightweight observation recording for analysis patterns
+### 🏗️ **Architecture Highlights**
 - 🌐 **HTTP API**: RESTful endpoints for DARK MATER MCP Client integration
 - 🔧 **Systemd Integration**: Production-ready service with automatic startup
 - 🔒 **Optional TLS/mTLS**: Support for encrypted connections
-- 🌐 **Ngrok Tunneling**: Remote access without port forwarding
+- ⚡ **High Performance**: Async FastAPI backend with concurrent tool execution
 
-## Quick Start
+---
 
-### Easy Installation & Startup
+## 🚀 **Quick Start Guide**
 
-#### **Option 1: Automated Installation** (Recommended)
-1. **Install the server** (requires root):
-   ```bash
-   curl -sSL https://raw.githubusercontent.com/khalilpreview/MCP-Kali-Server/main/install.sh | sudo bash
-   ```
+<div align="center">
+  <img src="https://img.shields.io/badge/Setup_Time-5_minutes-brightgreen?style=for-the-badge" alt="Setup Time" />
+  <img src="https://img.shields.io/badge/Difficulty-Easy-green?style=for-the-badge" alt="Difficulty" />
+</div>
 
-2. **Start with the CLI tool**:
-   ```bash
-   sudo dark-mater_kali-mcp start-server
-   ```
+### 🎯 **Easy Installation & Startup**
 
-#### **Option 2: Manual Installation** (If online installer has issues)
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="50%">
+        <h4>🎯 Option 1: Automated Installation (Recommended)</h4>
+        <img src="https://img.icons8.com/color/64/000000/rocket.png" alt="Rocket" width="48"/>
+        <br><br>
+        <strong>1. Install the server</strong> (requires root):
+        <pre><code>curl -sSL https://raw.githubusercontent.com/khalilpreview/MCP-Kali-Server/main/install.sh | sudo bash</code></pre>
+        <strong>2. Start with the CLI tool</strong>:
+        <pre><code>sudo dark-mater_kali-mcp start-server</code></pre>
+      </td>
+      <td align="center" width="50%">
+        <h4>⚙️ Option 2: Manual Installation</h4>
+        <img src="https://img.icons8.com/color/64/000000/settings.png" alt="Settings" width="48"/>
+        <br><br>
+        For advanced users or custom deployments
+        <br><br>
+        <a href="#option-2-manual-installation-if-online-installer-has-issues">📖 See detailed manual installation steps below</a>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
+### ⚙️ **Option 2: Manual Installation** (If online installer has issues)
 1. **Clone the repository**:
    ```bash
    # Create directories and user
@@ -117,28 +176,112 @@ If you encounter ngrok-related errors:
    sudo dark-mater_kali-mcp start-server
    ```
 
-#### **CLI Features:**
-   - 🎨 **DARK MATER ASCII banner**
-   - 🌐 **Interactive ngrok setup** (optional)
-   - 🚀 **Automatic server startup**
-   - 📋 **Enrollment information display**
-   - 🎛️ **Interactive management menu**
+<div align="center">
+  <h4>🎨 CLI Features</h4>
+  <table>
+    <tr>
+      <td align="center">🎨</td>
+      <td><strong>DARK MATER ASCII banner</strong></td>
+      <td align="center">🌐</td>
+      <td><strong>Interactive ngrok setup</strong></td>
+    </tr>
+    <tr>
+      <td align="center">🚀</td>
+      <td><strong>Automatic server startup</strong></td>
+      <td align="center">📋</td>
+      <td><strong>Enrollment information display</strong></td>
+    </tr>
+    <tr>
+      <td align="center">🎛️</td>
+      <td><strong>Interactive management menu</strong></td>
+      <td align="center">📊</td>
+      <td><strong>Real-time health monitoring</strong></td>
+    </tr>
+  </table>
+</div>
 
-## CLI Management Tool
+---
 
-The `dark-mater_kali-mcp` CLI tool provides comprehensive server management:
+## 🎛️ **CLI Management Tool**
 
-### Features
-- 🎨 **Beautiful ASCII banner** with DARK MATER branding
-- 🌐 **Interactive ngrok configuration** with token prompts
-- 🚀 **Automatic server startup** and health monitoring  
-- 📋 **Real-time enrollment status** and server information
-- 🎛️ **Interactive control panel** with multiple options:
-  - Server status monitoring
+<div align="center">
+  <img src="https://img.icons8.com/color/96/000000/command-line.png" alt="CLI" width="64"/>
+  <h4>The <code>dark-mater_kali-mcp</code> CLI tool provides comprehensive server management</h4>
+</div>
 
-## Server Management Commands
+<div align="center">
+  <h4>✨ CLI Features Overview</h4>
+</div>
 
-### Check if Server is Running
+<table>
+  <tr>
+    <td width="50%">
+      <h4>🎨 Beautiful Interface</h4>
+      <ul>
+        <li>DARK MATER ASCII banner</li>
+        <li>Colored output and progress indicators</li>
+        <li>Interactive menus and prompts</li>
+      </ul>
+    </td>
+    <td width="50%">
+      <h4>🚀 Smart Automation</h4>
+      <ul>
+        <li>Automatic server startup</li>
+        <li>Health monitoring and status checks</li>
+        <li>Graceful error handling</li>
+      </ul>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <h4>🌐 Network Features</h4>
+      <ul>
+        <li>Interactive ngrok configuration</li>
+        <li>Token management and validation</li>
+        <li>Public URL generation</li>
+      </ul>
+    </td>
+    <td>
+      <h4>📊 Management Tools</h4>
+      <ul>
+        <li>Real-time enrollment status</li>
+        <li>Server information display</li>
+        <li>Interactive control panel</li>
+      </ul>
+    </td>
+  </tr>
+</table>
+
+---
+
+## 🖥️ **Server Management Commands**
+
+<div align="center">
+  <img src="https://img.icons8.com/color/64/000000/server.png" alt="Server" width="48"/>
+</div>
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/48/000000/check-all.png" alt="Check" width="32"/>
+        <h4>🔍 Check Server Status</h4>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/48/000000/log.png" alt="Logs" width="32"/>
+        <h4>📊 View Server Logs</h4>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/48/000000/control-panel.png" alt="Control" width="32"/>
+        <h4>🎮 Manual Control</h4>
+      </td>
+    </tr>
+  </table>
+</div>
+
+<details>
+<summary><b>🔍 Check if Server is Running</b></summary>
+
 ```bash
 # Check server process
 ps aux | grep kali_server | grep -v grep
@@ -149,8 +292,11 @@ curl -sS http://localhost:5000/health
 # Check server port
 netstat -tlnp | grep :5000
 ```
+</details>
 
-### View Server Logs
+<details>
+<summary><b>📊 View Server Logs</b></summary>
+
 ```bash
 # View live logs
 tail -f /var/log/mcp-kali-server.log
@@ -161,8 +307,11 @@ tail -50 /var/log/mcp-kali-server.log
 # Search for errors
 grep ERROR /var/log/mcp-kali-server.log
 ```
+</details>
 
-### Manual Server Control
+<details>
+<summary><b>🎮 Manual Server Control</b></summary>
+
 ```bash
 # Start server (without ngrok)
 /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000
@@ -173,6 +322,7 @@ nohup /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py -
 # Kill server process
 pkill -f kali_server.py
 ```
+</details>
   - Server restart functionality
   - Log viewing capabilities
   - Health testing
@@ -687,38 +837,54 @@ sudo -u mcpserver python3 -m venv /opt/mcp-kali-server/venv
 sudo -u mcpserver /opt/mcp-kali-server/venv/bin/pip install -r /opt/mcp-kali-server/requirements.txt
 ```
 
-## Troubleshooting Installation
+---
 
-### Common Issues
+## 🔧 **Troubleshooting Installation**
 
-#### **Online Installer Fails**
+<div align="center">
+  <img src="https://img.icons8.com/color/64/000000/help.png" alt="Help" width="48"/>
+  <h4>Common installation issues and solutions</h4>
+</div>
+
+### 🚨 **Common Issues**
+
+<details>
+<summary><b>🌐 Online Installer Fails</b></summary>
+
 If `curl -sSL ... | sudo bash` fails with syntax errors:
 
-1. **Download and inspect** the installer first:
-   ```bash
-   curl -sSL https://raw.githubusercontent.com/khalilpreview/MCP-Kali-Server/main/install.sh -o install.sh
-   sudo chmod +x install.sh
-   sudo ./install.sh
-   ```
+**Solution 1: Download and inspect first**
+```bash
+curl -sSL https://raw.githubusercontent.com/khalilpreview/MCP-Kali-Server/main/install.sh -o install.sh
+sudo chmod +x install.sh
+sudo ./install.sh
+```
 
-2. **Use manual installation** (see Option 2 above)
+**Solution 2: Use manual installation** (see Option 2 above)
 
-> **Recent Fix**: If you encountered "syntax error near unexpected token `else'" during installation, this has been resolved. The installer now properly detects systemd environments and gracefully handles non-systemd systems (Docker, WSL, chroot).
+> **✅ Recent Fix**: The "syntax error near unexpected token `else'" issue has been resolved. The installer now properly detects systemd environments and gracefully handles non-systemd systems (Docker, WSL, chroot).
+</details>
 
-#### **Permission Denied on Git Clone**
+<details>
+<summary><b>🔑 Permission Denied on Git Clone</b></summary>
+
 ```bash
 # Fix: Create directory with proper ownership first
 sudo mkdir -p /opt/mcp-kali-server
 sudo chown -R mcpserver:mcpserver /opt/mcp-kali-server
 sudo -u mcpserver git clone https://github.com/khalilpreview/MCP-Kali-Server.git /opt/mcp-kali-server
 ```
+</details>
 
-#### **CLI Tool Not Found**
+<details>
+<summary><b>🔧 CLI Tool Not Found</b></summary>
+
 ```bash
 # Fix: Create symlink manually
 sudo ln -sf /opt/mcp-kali-server/dark-mater_kali-mcp /usr/local/bin/dark-mater_kali-mcp
 sudo chmod +x /usr/local/bin/dark-mater_kali-mcp
 ```
+</details>
 
 ### Running Without Systemd
 
@@ -756,37 +922,153 @@ nohup /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py -
 
 The FastAPI app in `mcp_server/api.py` can be extended with additional endpoints. Follow the existing patterns for authentication and error handling.
 
-## Integration Documentation
+---
 
-For connecting the DARK MATER Client Dashboard:
+## 📚 **Integration Documentation**
 
-- 📋 **[Integration Guide](INTEGRATION.md)** - Complete integration documentation with code examples
-- 🔌 **[API Reference](API_REFERENCE.md)** - Quick API endpoint reference
-- ⚙️ **[Dashboard Configuration](DASHBOARD_CONFIG.md)** - Backend setup and configuration
+<div align="center">
+  <img src="https://img.icons8.com/color/96/000000/api.png" alt="API Integration" width="64"/>
+  <h4>Complete integration resources for the DARK MATER Client Dashboard</h4>
+</div>
 
-### Key Integration Points
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/64/000000/book.png" alt="Guide" width="48"/>
+        <h4>📋 Integration Guide</h4>
+        <p><a href="INTEGRATION.md"><strong>INTEGRATION.md</strong></a></p>
+        <p>Complete integration documentation with code examples</p>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/64/000000/api-settings.png" alt="API" width="48"/>
+        <h4>🔌 API Reference</h4>
+        <p><a href="API_REFERENCE.md"><strong>API_REFERENCE.md</strong></a></p>
+        <p>Quick API endpoint reference and examples</p>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/64/000000/dashboard.png" alt="Dashboard" width="48"/>
+        <h4>⚙️ Dashboard Config</h4>
+        <p><a href="DASHBOARD_CONFIG.md"><strong>DASHBOARD_CONFIG.md</strong></a></p>
+        <p>Backend setup and configuration guide</p>
+      </td>
+    </tr>
+  </table>
+</div>
 
-1. **Server Enrollment**: One-time setup with enrollment token
-2. **Bearer Authentication**: API key-based authentication for all requests
-3. **Tool Execution**: Schema-validated security tool execution
-4. **Artifact Management**: Automatic result storage and retrieval
-5. **Real-time Monitoring**: Server health and status tracking
+### 🔑 **Key Integration Points**
 
-## License
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="20%">
+        <img src="https://img.icons8.com/color/48/000000/key.png" alt="Enrollment" width="32"/>
+        <br><strong>Server Enrollment</strong>
+        <br><small>One-time setup with enrollment token</small>
+      </td>
+      <td align="center" width="20%">
+        <img src="https://img.icons8.com/color/48/000000/security-shield-green.png" alt="Auth" width="32"/>
+        <br><strong>Bearer Authentication</strong>
+        <br><small>API key-based authentication</small>
+      </td>
+      <td align="center" width="20%">
+        <img src="https://img.icons8.com/color/48/000000/wrench.png" alt="Tools" width="32"/>
+        <br><strong>Tool Execution</strong>
+        <br><small>Schema-validated security tools</small>
+      </td>
+      <td align="center" width="20%">
+        <img src="https://img.icons8.com/color/48/000000/archive.png" alt="Artifacts" width="32"/>
+        <br><strong>Artifact Management</strong>
+        <br><small>Automatic result storage</small>
+      </td>
+      <td align="center" width="20%">
+        <img src="https://img.icons8.com/color/48/000000/heart-monitor.png" alt="Monitoring" width="32"/>
+        <br><strong>Real-time Monitoring</strong>
+        <br><small>Server health tracking</small>
+      </td>
+    </tr>
+  </table>
+</div>
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+---
 
-## Support
+## 📄 **License**
 
-- GitHub Issues: https://github.com/khalilpreview/MCP-Kali-Server/issues
-- Documentation: https://github.com/khalilpreview/MCP-Kali-Server/wiki
-- Integration Docs: [INTEGRATION.md](INTEGRATION.md)
+<div align="center">
+  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License" />
+  <br>
+  <p>This project is licensed under the MIT License - see the <a href="LICENSE">LICENSE</a> file for details.</p>
+</div>
 
-## Contributing
+---
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes with tests
-4. Submit a pull request
+## 🤝 **Support & Community**
 
-Please ensure all changes maintain security best practices and include appropriate tests.
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/64/000000/github.png" alt="GitHub" width="48"/>
+        <h4>🐛 GitHub Issues</h4>
+        <p><a href="https://github.com/khalilpreview/MCP-Kali-Server/issues">Report bugs & request features</a></p>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/64/000000/document.png" alt="Documentation" width="48"/>
+        <h4>📚 Documentation</h4>
+        <p><a href="https://github.com/khalilpreview/MCP-Kali-Server/wiki">Complete documentation & guides</a></p>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/64/000000/api.png" alt="Integration" width="48"/>
+        <h4>🔗 Integration</h4>
+        <p><a href="INTEGRATION.md">Dashboard integration guide</a></p>
+      </td>
+    </tr>
+  </table>
+</div>
+
+---
+
+## 🤝 **Contributing**
+
+<div align="center">
+  <img src="https://img.icons8.com/color/64/000000/collaboration.png" alt="Contributing" width="48"/>
+  <h4>We welcome contributions from the community!</h4>
+</div>
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center" width="25%">
+        <img src="https://img.icons8.com/color/48/000000/git.png" alt="Fork" width="32"/>
+        <br><strong>1. Fork</strong>
+        <br><small>Fork the repository</small>
+      </td>
+      <td align="center" width="25%">
+        <img src="https://img.icons8.com/color/48/000000/branch.png" alt="Branch" width="32"/>
+        <br><strong>2. Branch</strong>
+        <br><small>Create a feature branch</small>
+      </td>
+      <td align="center" width="25%">
+        <img src="https://img.icons8.com/color/48/000000/code.png" alt="Code" width="32"/>
+        <br><strong>3. Code</strong>
+        <br><small>Make your changes</small>
+      </td>
+      <td align="center" width="25%">
+        <img src="https://img.icons8.com/color/48/000000/pull-request.png" alt="PR" width="32"/>
+        <br><strong>4. Submit</strong>
+        <br><small>Create pull request</small>
+      </td>
+    </tr>
+  </table>
+</div>
+
+> **🔒 Security First**: Please ensure all changes maintain security best practices and include appropriate tests.
+
+---
+
+<div align="center">
+  <img src="https://img.shields.io/badge/Made_with-❤️-red?style=for-the-badge" alt="Made with Love" />
+  <br>
+  <h4>🌟 Star this repository if you find it useful!</h4>
+  <p><strong>DARK MATER MCP Kali Server</strong> - Empowering security professionals worldwide</p>
+</div>
