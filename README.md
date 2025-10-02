@@ -7,6 +7,7 @@
 <div align="center">
   <h3>🔒 Production-Ready Security Testing Platform</h3>
   <p>A powerful Model Context Protocol (MCP) server for security testing with Kali Linux tools</p>
+  <p><strong>🏢 Powered by <a href="https://zyniq.solutions">Zyniq Solutions</a></strong></p>
   
   <!-- Technology Stack -->
   <p>
@@ -22,7 +23,8 @@
   <p>
     <img src="https://img.shields.io/badge/Version-2.0-brightgreen?style=flat-square" alt="Version" />
     <img src="https://img.shields.io/badge/Status-Production%20Ready-success?style=flat-square" alt="Status" />
-    <img src="https://img.shields.io/badge/License-MIT-blue?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/badge/License-Commercial-gold?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/badge/Access-Private-red?style=flat-square" alt="Access" />
     <img src="https://img.shields.io/badge/Security-Tested-orange?style=flat-square" alt="Security" />
   </p>
 </div>
@@ -992,12 +994,35 @@ The FastAPI app in `mcp_server/api.py` can be extended with additional endpoints
 
 ---
 
-## 📄 **License**
+## 📄 **License & Pricing**
 
 <div align="center">
-  <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="MIT License" />
+  <img src="https://img.shields.io/badge/License-Commercial-gold?style=for-the-badge" alt="Commercial License" />
+  <img src="https://img.shields.io/badge/Access-Private-red?style=for-the-badge" alt="Private Access" />
   <br>
-  <p>This project is licensed under the MIT License - see the <a href="LICENSE">LICENSE</a> file for details.</p>
+  <h4>🔒 Private Commercial Software</h4>
+  <p>This is a <strong>private, commercial product</strong> available for purchase.</p>
+  <p>Contact us for licensing and pricing information.</p>
+  
+  <table>
+    <tr>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/64/000000/money-bag.png" alt="Pricing" width="48"/>
+        <h4>💰 Commercial License</h4>
+        <p>Professional enterprise solution</p>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/64/000000/security-lock.png" alt="Private" width="48"/>
+        <h4>🔐 Private Repository</h4>
+        <p>Exclusive access for licensed users</p>
+      </td>
+      <td align="center" width="33%">
+        <img src="https://img.icons8.com/color/64/000000/customer-support.png" alt="Support" width="48"/>
+        <h4>🎯 Premium Support</h4>
+        <p>Dedicated professional support</p>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ---
@@ -1007,17 +1032,22 @@ The FastAPI app in `mcp_server/api.py` can be extended with additional endpoints
 <div align="center">
   <table>
     <tr>
-      <td align="center" width="33%">
+      <td align="center" width="25%">
+        <img src="https://img.icons8.com/color/64/000000/company.png" alt="Company" width="48"/>
+        <h4>🏢 Zyniq Solutions</h4>
+        <p><a href="https://zyniq.solutions">Visit our website</a></p>
+      </td>
+      <td align="center" width="25%">
         <img src="https://img.icons8.com/color/64/000000/github.png" alt="GitHub" width="48"/>
         <h4>🐛 GitHub Issues</h4>
         <p><a href="https://github.com/khalilpreview/MCP-Kali-Server/issues">Report bugs & request features</a></p>
       </td>
-      <td align="center" width="33%">
+      <td align="center" width="25%">
         <img src="https://img.icons8.com/color/64/000000/document.png" alt="Documentation" width="48"/>
         <h4>📚 Documentation</h4>
         <p><a href="https://github.com/khalilpreview/MCP-Kali-Server/wiki">Complete documentation & guides</a></p>
       </td>
-      <td align="center" width="33%">
+      <td align="center" width="25%">
         <img src="https://img.icons8.com/color/64/000000/api.png" alt="Integration" width="48"/>
         <h4>🔗 Integration</h4>
         <p><a href="INTEGRATION.md">Dashboard integration guide</a></p>
@@ -1028,47 +1058,62 @@ The FastAPI app in `mcp_server/api.py` can be extended with additional endpoints
 
 ---
 
-## 🤝 **Contributing**
+## 💼 **Purchase & Access**
 
 <div align="center">
-  <img src="https://img.icons8.com/color/64/000000/collaboration.png" alt="Contributing" width="48"/>
-  <h4>We welcome contributions from the community!</h4>
+  <img src="https://img.icons8.com/color/64/000000/shopping-cart.png" alt="Purchase" width="48"/>
+  <h4>Get Licensed Access to DARK MATER MCP Kali Server</h4>
 </div>
 
 <div align="center">
   <table>
     <tr>
       <td align="center" width="25%">
-        <img src="https://img.icons8.com/color/48/000000/git.png" alt="Fork" width="32"/>
-        <br><strong>1. Fork</strong>
-        <br><small>Fork the repository</small>
+        <img src="https://img.icons8.com/color/48/000000/contact.png" alt="Contact" width="32"/>
+        <br><strong>1. Contact</strong>
+        <br><small>Reach out for pricing</small>
       </td>
       <td align="center" width="25%">
-        <img src="https://img.icons8.com/color/48/000000/branch.png" alt="Branch" width="32"/>
-        <br><strong>2. Branch</strong>
-        <br><small>Create a feature branch</small>
+        <img src="https://img.icons8.com/color/48/000000/purchase-order.png" alt="License" width="32"/>
+        <br><strong>2. License</strong>
+        <br><small>Purchase commercial license</small>
       </td>
       <td align="center" width="25%">
-        <img src="https://img.icons8.com/color/48/000000/code.png" alt="Code" width="32"/>
-        <br><strong>3. Code</strong>
-        <br><small>Make your changes</small>
+        <img src="https://img.icons8.com/color/48/000000/key.png" alt="Access" width="32"/>
+        <br><strong>3. Access</strong>
+        <br><small>Receive private repo access</small>
       </td>
       <td align="center" width="25%">
-        <img src="https://img.icons8.com/color/48/000000/pull-request.png" alt="PR" width="32"/>
-        <br><strong>4. Submit</strong>
-        <br><small>Create pull request</small>
+        <img src="https://img.icons8.com/color/48/000000/rocket.png" alt="Deploy" width="32"/>
+        <br><strong>4. Deploy</strong>
+        <br><small>Install and configure</small>
       </td>
     </tr>
   </table>
 </div>
 
-> **🔒 Security First**: Please ensure all changes maintain security best practices and include appropriate tests.
+### 🏢 **Enterprise Features**
+- **� Private Repository Access** - Exclusive source code access
+- **💎 Premium Support** - Direct technical support and consultation
+- **🔄 Regular Updates** - Priority access to new features and security patches
+- **📋 Commercial License** - Full rights for business and enterprise use
+- **🎯 Custom Integration** - Tailored deployment and configuration assistance
+
+### 📞 **Contact for Purchase**
+- **Company**: [Zyniq Solutions](https://zyniq.solutions)
+- **Email**: [contact@zyniq.solutions](mailto:contact@zyniq.solutions)
+- **License Inquiry**: Professional and enterprise licensing available
+- **Support**: Premium support included with all licenses
 
 ---
 
 <div align="center">
   <img src="https://img.shields.io/badge/Made_with-❤️-red?style=for-the-badge" alt="Made with Love" />
+  <img src="https://img.shields.io/badge/Enterprise-Ready-gold?style=for-the-badge" alt="Enterprise Ready" />
+  <img src="https://img.shields.io/badge/Powered_by-Zyniq_Solutions-blue?style=for-the-badge" alt="Powered by Zyniq Solutions" />
   <br>
-  <h4>🌟 Star this repository if you find it useful!</h4>
-  <p><strong>DARK MATER MCP Kali Server</strong> - Empowering security professionals worldwide</p>
+  <h4>💼 Professional Security Testing Platform</h4>
+  <p><strong>DARK MATER MCP Kali Server</strong> - Premium security testing solution for professionals</p>
+  <p><em>🔒 Private commercial software by <a href="https://zyniq.solutions"><strong>Zyniq Solutions</strong></a></em></p>
+  <p><em>Contact us for licensing and access</em></p>
 </div>
