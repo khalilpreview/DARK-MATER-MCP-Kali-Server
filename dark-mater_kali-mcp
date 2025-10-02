@@ -131,33 +131,73 @@ class DarkMaterCLI:
                 
         self.print_colored(f"\n🚀 Starting DARK MATER MCP Server...", Colors.GREEN, True)
         
-        try:
-            # Start the server process
-            self.server_process = subprocess.Popen(
-                cmd,
-                env=env,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                universal_newlines=True,
-                bufsize=1
-            )
+        # First check if files exist
+        if not Path(self.venv_python).exists():
+            self.print_colored(f"❌ Python executable not found: {self.venv_python}", Colors.RED, True)
+            return False
             
-            # Give server time to start
-            time.sleep(3)
+        if not Path(self.server_script).exists():
+            self.print_colored(f"❌ Server script not found: {self.server_script}", Colors.RED, True)
+            return False
+        
+        try:
+            # Create log file for server output
+            log_file = "/var/log/mcp-kali-server.log"
+            
+            # Start the server process with output to log file
+            with open(log_file, 'w') as f:
+                self.server_process = subprocess.Popen(
+                    cmd,
+                    env=env,
+                    stdout=f,
+                    stderr=subprocess.STDOUT,
+                    universal_newlines=True,
+                    start_new_session=True  # Start in new session to avoid signal issues
+                )
+            
+            self.print_colored(f"📝 Server output logged to: {log_file}", Colors.BLUE)
+            
+            # Give server time to start and check if it's still running
+            time.sleep(5)
             
             # Check if process is still running
             if self.server_process.poll() is None:
-                self.print_colored("✅ Server started successfully!", Colors.GREEN, True)
-                return True
+                # Try to connect to the server to verify it's actually working
+                time.sleep(2)  # Give it a bit more time
+                
+                try:
+                    response = requests.get("http://localhost:5000/health", timeout=3)
+                    if response.status_code in [200, 401]:  # 401 is expected without API key
+                        self.print_colored("✅ Server started successfully!", Colors.GREEN, True)
+                        self.print_colored("🔗 Server accessible at: http://localhost:5000", Colors.CYAN)
+                        return True
+                    else:
+                        self.print_colored(f"⚠️ Server responding with status {response.status_code}", Colors.YELLOW)
+                        return True  # Still consider it successful
+                except requests.exceptions.RequestException:
+                    self.print_colored("⚠️ Server process running but not responding yet", Colors.YELLOW)
+                    self.print_colored(f"💡 Check logs: tail -f {log_file}", Colors.BLUE)
+                    return True  # Process is running, might just need more time
             else:
-                stdout, stderr = self.server_process.communicate()
-                self.print_colored("❌ Server failed to start:", Colors.RED, True)
-                if stderr:
-                    self.print_colored(stderr, Colors.RED)
+                self.print_colored("❌ Server process exited", Colors.RED, True)
+                self.print_colored(f"📋 Check logs for details: cat {log_file}", Colors.YELLOW)
+                
+                # Show last few lines of log file if it exists
+                try:
+                    with open(log_file, 'r') as f:
+                        lines = f.readlines()
+                        if lines:
+                            self.print_colored("📄 Last few log lines:", Colors.YELLOW)
+                            for line in lines[-5:]:
+                                self.print_colored(f"  {line.strip()}", Colors.WHITE)
+                except:
+                    pass
                 return False
                 
         except Exception as e:
             self.print_colored(f"❌ Failed to start server: {e}", Colors.RED, True)
+            self.print_colored("💡 Try manual startup:", Colors.BLUE)
+            self.print_colored(f"   {' '.join(cmd)}", Colors.WHITE)
             return False
             
     def check_server_health(self, api_key=None):
@@ -350,8 +390,61 @@ class DarkMaterCLI:
             self.display_server_info()
             self.show_menu()
         else:
-            self.print_colored("❌ Failed to start server. Check installation and try again.", Colors.RED, True)
-            sys.exit(1)
+            self.print_colored("❌ Automatic server startup failed.", Colors.RED, True)
+            self.print_separator()
+            self.print_colored("🛠️ Manual Startup Options", Colors.CYAN, True)
+            
+            cmd_base = f"{self.venv_python} {self.server_script} --bind 0.0.0.0:5000"
+            
+            if ngrok_token:
+                cmd_ngrok = f"{cmd_base} --ngrok --ngrok-authtoken {ngrok_token}"
+                if ngrok_domain:
+                    cmd_ngrok += f" --ngrok-domain {ngrok_domain}"
+                
+                self.print_colored("\n🌐 With ngrok tunnel:", Colors.GREEN)
+                self.print_colored(f"nohup {cmd_ngrok} > /var/log/mcp-kali-server.log 2>&1 &", Colors.WHITE)
+            else:
+                self.print_colored("\n🔗 Local server:", Colors.GREEN)
+                self.print_colored(f"nohup {cmd_base} > /var/log/mcp-kali-server.log 2>&1 &", Colors.WHITE)
+            
+            self.print_colored("\n📋 Check logs:", Colors.BLUE)
+            self.print_colored("tail -f /var/log/mcp-kali-server.log", Colors.WHITE)
+            
+            self.print_colored("\n🧪 Test connection:", Colors.BLUE)
+            self.print_colored("curl -sS http://localhost:5000/health", Colors.WHITE)
+            
+            self.print_separator()
+            
+            # Ask if user wants to try manual startup
+            try:
+                choice = input(f"\n{Colors.GREEN}Try manual startup now? (y/N): {Colors.END}").strip().lower()
+                if choice in ['y', 'yes']:
+                    self.print_colored("🚀 Starting server manually...", Colors.CYAN, True)
+                    
+                    # Try manual startup
+                    if ngrok_token:
+                        cmd = f"nohup {cmd_ngrok} > /var/log/mcp-kali-server.log 2>&1 &"
+                    else:
+                        cmd = f"nohup {cmd_base} > /var/log/mcp-kali-server.log 2>&1 &"
+                    
+                    os.system(cmd)
+                    time.sleep(3)
+                    
+                    # Check if it worked
+                    try:
+                        response = requests.get("http://localhost:5000/health", timeout=5)
+                        if response.status_code in [200, 401]:
+                            self.print_colored("✅ Manual startup successful!", Colors.GREEN, True)
+                            self.display_server_info()
+                        else:
+                            self.print_colored("⚠️ Server may be starting... check logs", Colors.YELLOW)
+                    except:
+                        self.print_colored("⚠️ Server starting in background... check logs", Colors.YELLOW)
+                        
+            except KeyboardInterrupt:
+                pass
+                
+            self.print_colored("\n👋 Exiting CLI. Server may be running in background.", Colors.CYAN)
 
 def main():
     """Main function"""
