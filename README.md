@@ -756,6 +756,22 @@ nohup /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py -
 
 The FastAPI app in `mcp_server/api.py` can be extended with additional endpoints. Follow the existing patterns for authentication and error handling.
 
+## Integration Documentation
+
+For connecting the DARK MATER Client Dashboard:
+
+- 📋 **[Integration Guide](INTEGRATION.md)** - Complete integration documentation with code examples
+- 🔌 **[API Reference](API_REFERENCE.md)** - Quick API endpoint reference
+- ⚙️ **[Dashboard Configuration](DASHBOARD_CONFIG.md)** - Backend setup and configuration
+
+### Key Integration Points
+
+1. **Server Enrollment**: One-time setup with enrollment token
+2. **Bearer Authentication**: API key-based authentication for all requests
+3. **Tool Execution**: Schema-validated security tool execution
+4. **Artifact Management**: Automatic result storage and retrieval
+5. **Real-time Monitoring**: Server health and status tracking
+
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
@@ -764,6 +780,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 - GitHub Issues: https://github.com/khalilpreview/MCP-Kali-Server/issues
 - Documentation: https://github.com/khalilpreview/MCP-Kali-Server/wiki
+- Integration Docs: [INTEGRATION.md](INTEGRATION.md)
 
 ## Contributing
 
