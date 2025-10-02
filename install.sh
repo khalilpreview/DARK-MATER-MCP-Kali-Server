@@ -111,7 +111,8 @@ install_dependencies() {
         curl \
         nmap \
         sqlite3 \
-        ca-certificates
+        ca-certificates \
+        python3-requests
     
     log_success "System dependencies installed"
 }
@@ -167,6 +168,15 @@ setup_repository() {
         sudo -u "$SERVICE_USER" git clone "$REPO_URL" "$INSTALL_DIR"
         log_success "Repository cloned"
     fi
+    
+    # Make scripts executable
+    chmod +x "$INSTALL_DIR/kali_server.py"
+    chmod +x "$INSTALL_DIR/dark-mater_kali-mcp"
+    
+    # Create symlink for global access
+    ln -sf "$INSTALL_DIR/dark-mater_kali-mcp" /usr/local/bin/dark-mater_kali-mcp
+    
+    log_success "CLI tool installed globally"
 }
 
 # Setup Python virtual environment
@@ -365,6 +375,11 @@ display_enrollment_info() {
     log_info "4. Add --ngrok flag to ExecStart command"
     log_info "5. Run: systemctl daemon-reload && systemctl restart $SERVICE_NAME"
     log_info "6. Check tunnel URL in service logs: journalctl -u $SERVICE_NAME -f"
+    echo
+    log_info "=== CLI TOOL ==="
+    echo
+    log_info "Easy server management with:"
+    log_info "sudo dark-mater_kali-mcp start-server"
     echo
 }
 

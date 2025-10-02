@@ -16,9 +16,90 @@ A production-ready Model Context Protocol (MCP) server for security testing with
 
 ## Quick Start
 
-### Installation
+### Easy Installation & Startup
 
-Run the installer on your Kali Linux system:
+1. **Install the server** (requires root):
+   ```bash
+   curl -sSL https://raw.githubusercontent.com/khalilpreview/MCP-Kali-Server/main/install.sh | sudo bash
+   ```
+
+2. **Start with the CLI tool**:
+   ```bash
+   sudo dark-mater_kali-mcp start-server
+   ```
+   
+   The CLI provides:
+   - 🎨 **DARK MATER ASCII banner**
+   - 🌐 **Interactive ngrok setup** (optional)
+   - 🚀 **Automatic server startup**
+   - 📋 **Enrollment information display**
+   - 🎛️ **Interactive management menu**
+
+## CLI Management Tool
+
+The `dark-mater_kali-mcp` CLI tool provides comprehensive server management:
+
+### Features
+- 🎨 **Beautiful ASCII banner** with DARK MATER branding
+- 🌐 **Interactive ngrok configuration** with token prompts
+- 🚀 **Automatic server startup** and health monitoring  
+- 📋 **Real-time enrollment status** and server information
+- 🎛️ **Interactive control panel** with multiple options:
+  - Server status monitoring
+  - Server restart functionality
+  - Log viewing capabilities
+  - Health testing
+  - Artifacts management
+  - Graceful shutdown
+
+### Usage
+```bash
+# Start the server with interactive setup
+sudo dark-mater_kali-mcp start-server
+
+# The CLI will guide you through:
+# 1. Ngrok token configuration (optional)
+# 2. Server startup
+# 3. Enrollment information display
+# 4. Interactive management menu
+```
+
+### Starting the Server
+
+After installation, you have multiple ways to start the server:
+
+#### **🎯 Recommended: CLI Tool** (Easy & Interactive)
+```bash
+# Start with the beautiful CLI interface
+sudo dark-mater_kali-mcp start-server
+```
+
+This provides:
+- Beautiful DARK MATER ASCII banner
+- Interactive ngrok setup
+- Automatic enrollment display
+- Real-time server management
+
+#### **⚙️ Systemd Service** (Background)
+```bash
+# Start as system service
+sudo systemctl start mcp-kali-server
+sudo systemctl status mcp-kali-server
+
+# Enable auto-start on boot
+sudo systemctl enable mcp-kali-server
+```
+
+#### **🚀 Direct Execution** (Development)
+```bash
+# Run directly (foreground)
+sudo /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000
+
+# With ngrok tunnel
+sudo /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000 --ngrok --ngrok-authtoken YOUR_TOKEN
+```
+
+### Alternative: Manual Installation
 
 ```bash
 # Download and run the installer
@@ -36,7 +117,7 @@ The installer will:
 - Install the server to `/opt/mcp-kali-server`
 - Set up systemd service
 - Generate enrollment token
-- Display enrollment JSON for copying
+- Install global CLI tool
 
 ### Optional: Enable Ngrok Tunneling
 
@@ -76,30 +157,60 @@ python kali_server.py --debug --bind 127.0.0.1:8000 --ngrok --ngrok-authtoken YO
 
 ### Enrollment
 
-After installation, use the displayed enrollment JSON to register your server:
+After installation, follow these steps to register your server:
+
+#### Step 1 — Locate the enrollment token
+
+The installer created this file:
 
 ```bash
-# Example enrollment (use your actual values)
-SERVER_IP="192.168.1.100"
-curl -X POST "http://${SERVER_IP}:5000/enroll" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "id": "a1b2c3d4",
-    "token": "e5f6g7h8i9j0k1l2m3n4o5p6",
-    "label": "Kali-Lab-1"
-  }'
+/etc/mcp-kali/enroll.json
 ```
 
-Response:
+Check it:
+
+```bash
+cat /etc/mcp-kali/enroll.json
+```
+
+You'll see something like:
+
+```json
+{"id":"kali-host-1727890000","token":"AbCdEfGh123XYZ","created":"2025-10-02T12:00:00Z"}
+```
+
+#### Step 2 — Call the enroll endpoint
+
+With the server running, send a POST to /enroll with that ID + token. Example:
+
+```bash
+curl -sS -X POST http://localhost:5000/enroll \
+  -H "Content-Type: application/json" \
+  -d '{"id":"kali-host-1727890000","token":"AbCdEfGh123XYZ","label":"Kali-Lab-1"}'
+```
+
+#### Step 3 — Get your API key
+
+The server should respond like this:
+
 ```json
 {
-  "server_id": "a1b2c3d4",
-  "api_key": "your-64-char-api-key-here",
+  "server_id": "kali-host-1727890000",
+  "api_key": "3qP7eD9xL0...<long-random-key>...",
   "label": "Kali-Lab-1"
 }
 ```
 
-Save the `api_key` - you'll need it for all subsequent requests.
+That `api_key` is what you'll use in the `Authorization: Bearer <api_key>` header for all other endpoints (`/health`, `/tools/list`, `/tools/call`, `/artifacts/...`).
+
+#### Step 4 — Verify it works
+
+```bash
+curl -sS http://localhost:5000/health \
+  -H "Authorization: Bearer <api_key>"
+```
+
+If you see `{ "ok": true, ... }`, your server is properly registered and ready.
 
 ## API Usage
 
@@ -421,6 +532,47 @@ sudo rm -rf /etc/mcp-kali
 ```
 
 ## Development
+
+### Manual Installation
+
+For manual setup or customization:
+
+```bash
+# As root, create directory and set ownership
+mkdir -p /opt/mcp-kali-server
+chown -R mcpserver:mcpserver /opt/mcp-kali-server
+
+# Clone repository as mcpserver user
+sudo -u mcpserver git clone git@github.com:khalilpreview/MCP-Kali-Server.git /opt/mcp-kali-server
+
+# Create virtual environment and install dependencies
+sudo -u mcpserver python3 -m venv /opt/mcp-kali-server/venv
+sudo -u mcpserver /opt/mcp-kali-server/venv/bin/pip install -r /opt/mcp-kali-server/requirements.txt
+```
+
+### Running Without Systemd
+
+If you're running in Docker, WSL, chroot, or another environment without systemd:
+
+```bash
+# First, verify your init system (optional)
+ps -p 1 -o comm=
+
+# If you don't see "systemd", that's why systemctl fails
+```
+
+**Quickest way to run the server:**
+
+```bash
+# Start server in foreground
+/opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000
+
+# Or run in background with nohup to keep it alive
+nohup /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000 > /var/log/mcp-kali-server.log 2>&1 &
+
+# With ngrok tunnel (if needed)
+nohup /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py --bind 0.0.0.0:5000 --ngrok --ngrok-authtoken YOUR_TOKEN > /var/log/mcp-kali-server.log 2>&1 &
+```
 
 ### Adding New Tools
 

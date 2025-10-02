@@ -1,0 +1,366 @@
+#!/usr/bin/env python3
+
+"""
+DARK MATER Kali MCP CLI Tool
+Interactive command-line interface for the MCP Kali Server
+"""
+
+import os
+import sys
+import json
+import subprocess
+import time
+import signal
+import requests
+from pathlib import Path
+from datetime import datetime
+
+# ASCII Art Banner
+BANNER = """
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║  ██████╗  █████╗ ██████╗ ██╗  ██╗    ███╗   ███╗ █████╗ ████████╗███████╗██████╗ ║
+║  ██╔══██╗██╔══██╗██╔══██╗██║ ██╔╝    ████╗ ████║██╔══██╗╚══██╔══╝██╔════╝██╔══██╗║
+║  ██║  ██║███████║██████╔╝█████╔╝     ██╔████╔██║███████║   ██║   █████╗  ██████╔╝║
+║  ██║  ██║██╔══██║██╔══██╗██╔═██╗     ██║╚██╔╝██║██╔══██║   ██║   ██╔══╝  ██╔══██╗║
+║  ██████╔╝██║  ██║██║  ██║██║  ██╗    ██║ ╚═╝ ██║██║  ██║   ██║   ███████╗██║  ██║║
+║  ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝    ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝║
+║                                                                              ║
+║                         🔰 KALI MCP SERVER 🔰                               ║
+║                    Advanced Security Testing Platform                       ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+"""
+
+class Colors:
+    RED = '\033[91m'
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+    END = '\033[0m'
+
+class DarkMaterCLI:
+    def __init__(self):
+        self.server_dir = "/opt/mcp-kali-server"
+        self.config_dir = "/etc/mcp-kali"
+        self.venv_python = f"{self.server_dir}/venv/bin/python"
+        self.server_script = f"{self.server_dir}/kali_server.py"
+        self.service_name = "mcp-kali-server"
+        self.server_process = None
+        
+    def print_banner(self):
+        """Display the DARK MATER banner"""
+        print(f"{Colors.CYAN}{BANNER}{Colors.END}")
+        
+    def print_colored(self, text, color=Colors.WHITE, bold=False):
+        """Print colored text"""
+        style = f"{color}{Colors.BOLD if bold else ''}"
+        print(f"{style}{text}{Colors.END}")
+        
+    def print_separator(self):
+        """Print a separator line"""
+        print(f"{Colors.BLUE}{'═' * 80}{Colors.END}")
+        
+    def check_root(self):
+        """Check if running as root"""
+        if os.geteuid() != 0:
+            self.print_colored("❌ This tool must be run as root (use sudo)", Colors.RED, True)
+            sys.exit(1)
+            
+    def check_installation(self):
+        """Check if the server is installed"""
+        if not Path(self.server_script).exists():
+            self.print_colored("❌ MCP Kali Server not found. Please run the installer first.", Colors.RED, True)
+            self.print_colored(f"Expected location: {self.server_script}", Colors.YELLOW)
+            sys.exit(1)
+            
+    def get_enrollment_info(self):
+        """Get enrollment information"""
+        enroll_file = f"{self.config_dir}/enroll.json"
+        if Path(enroll_file).exists():
+            try:
+                with open(enroll_file, 'r') as f:
+                    return json.load(f)
+            except:
+                return None
+        return None
+        
+    def get_server_credentials(self):
+        """Get server credentials if enrolled"""
+        creds_file = f"{self.config_dir}/credentials.json"
+        if Path(creds_file).exists():
+            try:
+                with open(creds_file, 'r') as f:
+                    return json.load(f)
+            except:
+                return None
+        return None
+        
+    def prompt_ngrok_token(self):
+        """Prompt for ngrok auth token"""
+        self.print_colored("\n🌐 Ngrok Configuration", Colors.CYAN, True)
+        self.print_colored("For remote access, you can configure an ngrok tunnel", Colors.WHITE)
+        self.print_colored("Get your auth token from: https://dashboard.ngrok.com/get-started/your-authtoken", Colors.YELLOW)
+        
+        token = input(f"\n{Colors.GREEN}Enter ngrok auth token (press Enter to skip): {Colors.END}").strip()
+        
+        domain = None
+        if token:
+            domain = input(f"{Colors.GREEN}Custom domain (optional, requires paid plan): {Colors.END}").strip()
+            if not domain:
+                domain = None
+                
+        return token, domain
+        
+    def start_server_process(self, ngrok_token=None, ngrok_domain=None):
+        """Start the server process"""
+        cmd = [self.venv_python, self.server_script, "--bind", "0.0.0.0:5000"]
+        
+        env = os.environ.copy()
+        
+        if ngrok_token:
+            cmd.extend(["--ngrok", "--ngrok-authtoken", ngrok_token])
+            env["NGROK_AUTHTOKEN"] = ngrok_token
+            if ngrok_domain:
+                cmd.extend(["--ngrok-domain", ngrok_domain])
+                
+        self.print_colored(f"\n🚀 Starting DARK MATER MCP Server...", Colors.GREEN, True)
+        
+        try:
+            # Start the server process
+            self.server_process = subprocess.Popen(
+                cmd,
+                env=env,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                universal_newlines=True,
+                bufsize=1
+            )
+            
+            # Give server time to start
+            time.sleep(3)
+            
+            # Check if process is still running
+            if self.server_process.poll() is None:
+                self.print_colored("✅ Server started successfully!", Colors.GREEN, True)
+                return True
+            else:
+                stdout, stderr = self.server_process.communicate()
+                self.print_colored("❌ Server failed to start:", Colors.RED, True)
+                if stderr:
+                    self.print_colored(stderr, Colors.RED)
+                return False
+                
+        except Exception as e:
+            self.print_colored(f"❌ Failed to start server: {e}", Colors.RED, True)
+            return False
+            
+    def check_server_health(self, api_key=None):
+        """Check server health"""
+        try:
+            headers = {}
+            if api_key:
+                headers["Authorization"] = f"Bearer {api_key}"
+                
+            response = requests.get("http://localhost:5000/health", headers=headers, timeout=5)
+            if response.status_code == 200:
+                return response.json()
+        except:
+            pass
+        return None
+        
+    def display_server_info(self):
+        """Display server information and enrollment details"""
+        self.print_separator()
+        self.print_colored("📋 Server Information", Colors.CYAN, True)
+        
+        # Check enrollment
+        enrollment = self.get_enrollment_info()
+        credentials = self.get_server_credentials()
+        
+        if enrollment:
+            self.print_colored(f"🔑 Server ID: {enrollment.get('id', 'Unknown')}", Colors.GREEN)
+            self.print_colored(f"⏰ Created: {enrollment.get('created', 'Unknown')}", Colors.GREEN)
+            
+        if credentials:
+            self.print_colored(f"✅ Status: Enrolled", Colors.GREEN)
+            self.print_colored(f"🏷️  Label: {credentials.get('label', 'Unknown')}", Colors.GREEN)
+            self.print_colored(f"🔐 API Key: {credentials.get('api_key', 'Unknown')[:20]}...", Colors.GREEN)
+            
+            # Check server health
+            health = self.check_server_health(credentials.get('api_key'))
+            if health:
+                self.print_colored("🟢 Server Status: Healthy", Colors.GREEN)
+                if 'ngrok_tunnel' in health and health['ngrok_tunnel'].get('public_url'):
+                    self.print_colored(f"🌐 Public URL: {health['ngrok_tunnel']['public_url']}", Colors.CYAN)
+            else:
+                self.print_colored("🔴 Server Status: Not responding", Colors.RED)
+        else:
+            self.print_colored("⚠️  Status: Not enrolled", Colors.YELLOW)
+            if enrollment:
+                self.print_colored("\n📝 Enrollment required:", Colors.YELLOW, True)
+                self.print_colored("curl -sS -X POST http://localhost:5000/enroll \\", Colors.WHITE)
+                self.print_colored("  -H \"Content-Type: application/json\" \\", Colors.WHITE)
+                self.print_colored(f"  -d '{{\"id\":\"{enrollment['id']}\",\"token\":\"{enrollment['token']}\",\"label\":\"Kali-Lab-1\"}}'", Colors.WHITE)
+                
+        self.print_colored(f"\n🔗 Local URL: http://localhost:5000", Colors.CYAN)
+        self.print_separator()
+        
+    def show_menu(self):
+        """Show interactive menu"""
+        while True:
+            print(f"\n{Colors.CYAN}🎛️  DARK MATER Control Panel{Colors.END}")
+            print(f"{Colors.WHITE}1.{Colors.END} 📊 Server Status")
+            print(f"{Colors.WHITE}2.{Colors.END} 🔄 Restart Server")
+            print(f"{Colors.WHITE}3.{Colors.END} 📋 View Logs")
+            print(f"{Colors.WHITE}4.{Colors.END} 🧪 Test Health")
+            print(f"{Colors.WHITE}5.{Colors.END} 📁 View Artifacts")
+            print(f"{Colors.WHITE}6.{Colors.END} 🛑 Stop Server")
+            print(f"{Colors.WHITE}7.{Colors.END} ❌ Exit")
+            
+            try:
+                choice = input(f"\n{Colors.GREEN}Select option (1-7): {Colors.END}").strip()
+                
+                if choice == "1":
+                    self.display_server_info()
+                elif choice == "2":
+                    self.restart_server()
+                elif choice == "3":
+                    self.view_logs()
+                elif choice == "4":
+                    self.test_health()
+                elif choice == "5":
+                    self.view_artifacts()
+                elif choice == "6":
+                    self.stop_server()
+                    break
+                elif choice == "7":
+                    self.stop_server()
+                    break
+                else:
+                    self.print_colored("❌ Invalid choice. Please select 1-7.", Colors.RED)
+                    
+            except KeyboardInterrupt:
+                self.print_colored("\n\n🛑 Interrupted by user", Colors.YELLOW)
+                self.stop_server()
+                break
+                
+    def restart_server(self):
+        """Restart the server"""
+        self.print_colored("🔄 Restarting server...", Colors.YELLOW, True)
+        self.stop_server()
+        time.sleep(2)
+        
+        # Get current configuration
+        token, domain = self.prompt_ngrok_token()
+        self.start_server_process(token, domain)
+        
+    def view_logs(self):
+        """View server logs"""
+        if self.server_process and self.server_process.poll() is None:
+            self.print_colored("📋 Recent server output:", Colors.CYAN, True)
+            try:
+                # This is a simplified version - in practice you'd implement proper log tailing
+                self.print_colored("Server is running in background. Check systemd logs for full output.", Colors.YELLOW)
+            except:
+                pass
+        else:
+            self.print_colored("❌ Server is not running", Colors.RED)
+            
+    def test_health(self):
+        """Test server health"""
+        credentials = self.get_server_credentials()
+        if not credentials:
+            self.print_colored("❌ Server not enrolled. Cannot test health.", Colors.RED)
+            return
+            
+        self.print_colored("🧪 Testing server health...", Colors.CYAN, True)
+        health = self.check_server_health(credentials.get('api_key'))
+        
+        if health:
+            self.print_colored("✅ Server is healthy!", Colors.GREEN, True)
+            self.print_colored(f"Server ID: {health.get('server_id', 'Unknown')}", Colors.WHITE)
+            self.print_colored(f"Available Tools: {health.get('available_tools', 0)}", Colors.WHITE)
+            if health.get('ngrok_tunnel', {}).get('public_url'):
+                self.print_colored(f"Public URL: {health['ngrok_tunnel']['public_url']}", Colors.CYAN)
+        else:
+            self.print_colored("❌ Server is not responding", Colors.RED, True)
+            
+    def view_artifacts(self):
+        """View artifacts directory"""
+        artifacts_dir = "/var/lib/mcp/artifacts"
+        if Path(artifacts_dir).exists():
+            try:
+                result = subprocess.run(['ls', '-la', artifacts_dir], capture_output=True, text=True)
+                self.print_colored("📁 Artifacts directory:", Colors.CYAN, True)
+                self.print_colored(result.stdout, Colors.WHITE)
+            except:
+                self.print_colored("❌ Failed to list artifacts", Colors.RED)
+        else:
+            self.print_colored("📁 No artifacts directory found", Colors.YELLOW)
+            
+    def stop_server(self):
+        """Stop the server process"""
+        if self.server_process:
+            self.print_colored("🛑 Stopping server...", Colors.YELLOW, True)
+            try:
+                self.server_process.terminate()
+                self.server_process.wait(timeout=10)
+                self.print_colored("✅ Server stopped successfully", Colors.GREEN)
+            except subprocess.TimeoutExpired:
+                self.print_colored("⚠️  Force killing server...", Colors.YELLOW)
+                self.server_process.kill()
+                self.server_process.wait()
+                self.print_colored("✅ Server force stopped", Colors.GREEN)
+            except:
+                pass
+            self.server_process = None
+        else:
+            self.print_colored("ℹ️  Server is not running", Colors.BLUE)
+            
+    def setup_signal_handlers(self):
+        """Setup signal handlers for graceful shutdown"""
+        def signal_handler(signum, frame):
+            self.print_colored(f"\n🛑 Received signal {signum}, shutting down...", Colors.YELLOW, True)
+            self.stop_server()
+            sys.exit(0)
+            
+        signal.signal(signal.SIGINT, signal_handler)
+        signal.signal(signal.SIGTERM, signal_handler)
+        
+    def run(self):
+        """Main entry point"""
+        self.setup_signal_handlers()
+        self.check_root()
+        self.check_installation()
+        
+        self.print_banner()
+        
+        # Get ngrok configuration
+        ngrok_token, ngrok_domain = self.prompt_ngrok_token()
+        
+        # Start server
+        if self.start_server_process(ngrok_token, ngrok_domain):
+            time.sleep(2)  # Give server time to fully start
+            self.display_server_info()
+            self.show_menu()
+        else:
+            self.print_colored("❌ Failed to start server. Check installation and try again.", Colors.RED, True)
+            sys.exit(1)
+
+def main():
+    """Main function"""
+    if len(sys.argv) > 1 and sys.argv[1] == "start-server":
+        cli = DarkMaterCLI()
+        cli.run()
+    else:
+        print("Usage: dark-mater_kali-mcp start-server")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
-# This script connect the MCP AI agent to Kali Linux terminal and API Server.
-
-# some of the code here was inspired from https://github.com/whit3rabbit0/project_astro , be sure to check them out
+# This script connect the DARK MATER MCP AI agent to Kali Linux terminal and API Server.
 
 import sys
 import os
@@ -24,7 +22,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Default configuration
-DEFAULT_KALI_SERVER = "http://localhost:5000" # change to your linux IP
+DEFAULT_KALI_SERVER = "http://localhost:5000" 
 DEFAULT_REQUEST_TIMEOUT = 300  # 5 minutes default timeout for API requests
 
 class KaliToolsClient:
@@ -410,7 +408,7 @@ def main():
     
     # Set up and run the MCP server
     mcp = setup_mcp_server(kali_client)
-    logger.info("Starting Kali MCP server")
+    logger.info("Starting DARK MATER Kali Linux MCP server")
     mcp.run()
 
 if __name__ == "__main__":

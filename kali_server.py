@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-MCP Kali Server - Production-ready security testing server
+DARK MATER MCP Kali Server - Production-ready security testing server
 with enrollment, authentication, and artifact storage.
 
 Entry point for the server application.
@@ -194,7 +194,7 @@ def main():
             "ssl_certfile": ssl_certfile,
         })
         
-        # TODO: Implement proper mTLS validation when ssl_ca_certs is provided
+        # Todo: Implement proper mTLS validation when ssl_ca_certs is provided
         # This would require custom SSL context configuration
         if ssl_ca_certs:
             logger.warning("mTLS CA file specified but not yet implemented in uvicorn config")
