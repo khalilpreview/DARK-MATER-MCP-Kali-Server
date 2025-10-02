@@ -133,21 +133,17 @@ create_user() {
 create_directories() {
     log_info "Creating directories..."
     
-    # Create install directory
-    mkdir -p "$INSTALL_DIR"
-    
     # Create config directory
     mkdir -p "$CONFIG_DIR"
     chmod 755 "$CONFIG_DIR"
+    chown root:root "$CONFIG_DIR"
     
     # Create data directories
     mkdir -p "$DATA_DIR/artifacts"
     mkdir -p "$DATA_DIR/memory"
-    
-    # Set ownership for data directories (install dir will be handled after cloning)
     chown -R "$SERVICE_USER:$SERVICE_USER" "$DATA_DIR"
-    chown root:root "$CONFIG_DIR"
     
+    # Note: Install directory will be created during repository setup
     log_success "Directories created"
 }
 
@@ -169,17 +165,19 @@ setup_repository() {
         log_success "Repository updated"
     else
         log_info "Cloning repository..."
-        # Remove existing directory if it exists
+        
+        # Remove existing directory completely
         rm -rf "$INSTALL_DIR"
         
-        # Create parent directory and set permissions
-        mkdir -p "$(dirname "$INSTALL_DIR")"
+        # Create directory as root
+        mkdir -p "$INSTALL_DIR"
         
-        # Clone as root first, then change ownership
-        if git clone "$REPO_URL" "$INSTALL_DIR"; then
-            # Set ownership after cloning
-            chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
-            log_success "Repository cloned"
+        # Set ownership to service user
+        chown -R "$SERVICE_USER:$SERVICE_USER" "$INSTALL_DIR"
+        
+        # Clone as the service user into the owned directory
+        if sudo -u "$SERVICE_USER" git clone "$REPO_URL" "$INSTALL_DIR"; then
+            log_success "Repository cloned successfully"
         else
             log_error "Failed to clone repository from $REPO_URL"
             log_info "You may need to check your internet connection or repository access"

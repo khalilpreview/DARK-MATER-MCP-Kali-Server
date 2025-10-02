@@ -9,7 +9,7 @@ A production-ready Model Context Protocol (MCP) server for security testing with
 - 🎯 **Scope & Guardrails**: CIDR-based targeting with destructive operation controls
 - 📦 **Artifact Storage**: Automatic storage and parsing of tool outputs with summaries
 - 🧠 **Memory Hooks**: Lightweight observation recording for analysis patterns
-- 🌐 **HTTP API**: RESTful endpoints for dashboard integration
+- 🌐 **HTTP API**: RESTful endpoints for DARK MATER MCP Client integration
 - 🔧 **Systemd Integration**: Production-ready service with automatic startup
 - 🔒 **Optional TLS/mTLS**: Support for encrypted connections
 - 🌐 **Ngrok Tunneling**: Remote access without port forwarding
@@ -416,22 +416,25 @@ curl -s -H "Authorization: Bearer ${API_KEY}" \
   "http://${SERVER_IP}:5000/memory/stats" | jq
 ```
 
-## Dashboard Integration
+## DARK MATER MCP Client
 
-The server provides dashboard-friendly endpoints:
+This server is designed to work seamlessly with the **DARK MATER MCP Client** - a sophisticated dashboard for managing multiple MCP servers and coordinating security testing operations.
 
-1. **Connection Test**: GET `/health` → returns server capabilities
-2. **Tool Discovery**: GET `/tools/list` → returns available tools with schemas  
-3. **Tool Execution**: POST `/tools/call` → executes tools with validation
-4. **Artifact Access**: GET `/artifacts/list` and `/artifacts/read` → access results
-5. **Memory Search**: GET `/memory/search` → search observations
+### Key Integration Features
+- 🔗 **Automatic Discovery**: The client can discover and connect to MCP servers
+- 🎯 **Centralized Management**: Control multiple Kali servers from one interface
+- 📊 **Real-time Monitoring**: Live server status and health monitoring
+- 🛠️ **Tool Orchestration**: Execute security tools across multiple servers
+- 📁 **Artifact Management**: Centralized collection and analysis of results
+- 🧠 **Knowledge Base**: Shared memory and findings across servers
 
-### Required Fields for Dashboard
+### Connection Setup
+1. **Install and start** this MCP server using the CLI tool
+2. **Enroll the server** to get your API credentials  
+3. **Add server to client** using the enrollment details
+4. **Start testing** with full dashboard capabilities
 
-When connecting from a dashboard, you need:
-- **Server URL**: `http://SERVER_IP:5000`  
-- **API Key**: Bearer token from enrollment response
-- **Server ID**: Returned in enrollment response (for artifact filtering)
+The DARK MATER ecosystem provides a complete security testing platform with distributed server management and comprehensive reporting capabilities.
 
 ## Security Considerations
 
