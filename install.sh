@@ -11,7 +11,21 @@ set -euo pipefail
 
 # Configuration
 SCRIPT_NAME="$(basename "$0")"
-INSTALL_DIR="/opt/mcp-kali-server"
+INS# Check if systemd is available
+check_systemd() {
+    if [[ $(ps -p 1 -o comm= 2>/dev/null) == "systemd" ]]; then
+        return 0  # systemd is available
+    else
+        return 1  # systemd is not available
+    fi
+}
+
+# Create systemd service
+create_service() {
+    if check_systemd; then
+        log_info "Creating systemd service..."
+        
+        cat > "/etc/systemd/system/$SERVICE_NAME.service" << EOFDIR="/opt/mcp-kali-server"
 CONFIG_DIR="/etc/mcp-kali"
 DATA_DIR="/var/lib/mcp"
 SERVICE_USER="mcpserver"
@@ -315,41 +329,46 @@ Environment=MCP_DATA_DIR=$DATA_DIR
 [Install]
 WantedBy=multi-user.target
 EOF
-    
-    # Reload systemd
-    systemctl daemon-reload
-    
-    log_success "Systemd service created"
+        
+        # Reload systemd
+        systemctl daemon-reload
+        
+        log_success "Systemd service created"
+    else
+        log_info "Systemd not detected (likely Docker/WSL/chroot environment)"
+        log_info "Skipping systemd service creation"
+        log_success "Manual startup methods will be provided"
+    fi
 }
 
 # Enable and start service
 start_service() {
-    log_info "Enabling and starting service..."
-    
-    # Enable service to start on boot
-    systemctl enable "$SERVICE_NAME"
-    
-    # Start the service
-    if systemctl is-active --quiet "$SERVICE_NAME"; then
-        log_info "Service is already running, restarting..."
-        systemctl restart "$SERVICE_NAME"
-    else
-        systemctl start "$SERVICE_NAME"
-    fi
-    
-    # Wait a moment for the service to start
-    sleep 2
-    
-    # Check service status
-    if systemctl is-active --quiet "$SERVICE_NAME"; then
-        log_success "Service started successfully"
+    if check_systemd; then
+        log_info "Enabling and starting service..."
         
-        # Show service status
-        systemctl --no-pager status "$SERVICE_NAME"
+        # Enable service to start on boot
+        systemctl enable "$SERVICE_NAME"
+        
+        # Start the service
+        systemctl start "$SERVICE_NAME"
+        
+        # Brief delay for service to start
+        sleep 2
+        
+        # Check service status
+        if systemctl is-active --quiet "$SERVICE_NAME"; then
+            log_success "Service started successfully"
+            
+            # Show service status
+            systemctl --no-pager status "$SERVICE_NAME"
+        else
+            log_error "Failed to start service"
+            log_info "Check service logs with: journalctl -u $SERVICE_NAME"
+            exit 1
+        fi
     else
-        log_error "Failed to start service"
-        log_info "Check service logs with: journalctl -u $SERVICE_NAME"
-        exit 1
+        log_info "Systemd not available - service startup skipped"
+        log_success "Server ready for manual startup"
     fi
 }
 
@@ -363,13 +382,34 @@ display_enrollment_info() {
     echo
     cat "$CONFIG_DIR/enroll.json"
     echo
-    log_info "=== SERVICE INFORMATION ==="
-    echo
-    log_info "Service name: $SERVICE_NAME"
-    log_info "Service status: systemctl status $SERVICE_NAME"
-    log_info "Service logs: journalctl -u $SERVICE_NAME -f"
-    log_info "Server URL: http://$(hostname -I | awk '{print $1}'):5000"
-    echo
+    if check_systemd; then
+        log_info "=== SERVICE INFORMATION ==="
+        echo  
+        log_info "Service name: $SERVICE_NAME"
+        log_info "Service status: systemctl status $SERVICE_NAME"
+        log_info "Service logs: journalctl -u $SERVICE_NAME -f"
+        log_info "Server URL: http://$(hostname -I | awk '{print $1}'):5000"
+        echo
+    else
+        log_info "=== MANUAL STARTUP REQUIRED ==="
+        echo
+        log_info "Init system check: $(ps -p 1 -o comm= 2>/dev/null || echo 'unknown')"
+        log_info "Systemd not available (Docker/WSL/chroot environment detected)"
+        echo
+        log_info "Start the server manually:"
+        echo
+        log_info "# Foreground mode:"
+        log_info "$INSTALL_DIR/venv/bin/python $INSTALL_DIR/kali_server.py --bind 0.0.0.0:5000"
+        echo
+        log_info "# Background mode (with nohup):"
+        log_info "nohup $INSTALL_DIR/venv/bin/python $INSTALL_DIR/kali_server.py --bind 0.0.0.0:5000 > /var/log/mcp-kali-server.log 2>&1 &"
+        echo
+        log_info "# With ngrok tunnel:"
+        log_info "nohup $INSTALL_DIR/venv/bin/python $INSTALL_DIR/kali_server.py --bind 0.0.0.0:5000 --ngrok --ngrok-authtoken YOUR_TOKEN > /var/log/mcp-kali-server.log 2>&1 &"
+        echo
+        log_info "Server URL: http://$(hostname -I | awk '{print $1}'):5000"
+        echo
+    fi
     log_info "=== CONFIGURATION FILES ==="
     echo
     log_info "Enrollment token: $CONFIG_DIR/enroll.json"
@@ -397,6 +437,16 @@ display_enrollment_info() {
     log_info "Easy server management with:"
     log_info "sudo dark-mater_kali-mcp start-server"
     echo
+    if ! check_systemd; then
+        log_info "=== QUICK START ==="
+        echo
+        log_info "Since systemd is not available, start the server now:"
+        log_info "sudo dark-mater_kali-mcp start-server"
+        echo
+        log_info "Or run directly:"
+        log_info "$INSTALL_DIR/venv/bin/python $INSTALL_DIR/kali_server.py --bind 0.0.0.0:5000"
+        echo
+    fi
 }
 
 # Cleanup on failure
