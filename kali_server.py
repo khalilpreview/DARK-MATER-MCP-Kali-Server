@@ -148,18 +148,18 @@ def main():
             def cleanup_ngrok():
                 if ngrok_manager:
                     logger.info("Shutting down ngrok tunnel...")
-                    ngrok_manager.disconnect()
+                    ngrok_manager.stop_tunnel()
             
             atexit.register(cleanup_ngrok)
             signal.signal(signal.SIGTERM, lambda s, f: cleanup_ngrok())
             signal.signal(signal.SIGINT, lambda s, f: cleanup_ngrok())
             
             # Start tunnel
-            tunnel_config = {}
-            if args.ngrok_domain:
-                tunnel_config["domain"] = args.ngrok_domain
-            
-            public_url = ngrok_manager.connect(port, **tunnel_config)
+            domain = getattr(args, 'ngrok_domain', None)
+            public_url = ngrok_manager.start_tunnel(port, domain=domain)
+            if not public_url:
+                logger.error("Failed to establish ngrok tunnel")
+                sys.exit(1)
             logger.info(f"Ngrok tunnel established: {public_url}")
             
         except Exception as e:

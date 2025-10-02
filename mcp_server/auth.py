@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 import logging
 
-from fastapi import HTTPException, status, Request
+from fastapi import HTTPException, status, Request, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel
 
@@ -263,7 +263,7 @@ def get_api_key_from_credentials(api_key: str) -> Optional[ServerCredentials]:
 # FastAPI Security
 security = HTTPBearer()
 
-async def require_api_key(request: Request, credentials: HTTPAuthorizationCredentials = security) -> ServerCredentials:
+async def require_api_key(request: Request, credentials: HTTPAuthorizationCredentials = Depends(security)) -> ServerCredentials:
     """
     FastAPI dependency that requires valid API key authentication.
     

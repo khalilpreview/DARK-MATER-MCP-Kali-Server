@@ -58,12 +58,23 @@ If you encounter ngrok-related errors:
 1. **Clone the repository**:
    ```bash
    # Create directories and user
-   sudo useradd --system --home-dir /opt/mcp-kali-server --shell /bin/false mcpserver
+   sudo useradd --system --home-dir /opt/mcp-kali-server --shell /bin/false mcpserver || true
    sudo mkdir -p /opt/mcp-kali-server
-   sudo chown -R mcpserver:mcpserver /opt/mcp-kali-server
    
-   # Clone repository
-   sudo -u mcpserver git clone https://github.com/khalilpreview/MCP-Kali-Server.git /opt/mcp-kali-server
+   # Clone repository first
+   sudo rm -rf /opt/mcp-kali-server/* 2>/dev/null || true
+   sudo git clone https://github.com/khalilpreview/MCP-Kali-Server.git /tmp/mcp-kali-server
+   sudo cp -r /tmp/mcp-kali-server/* /opt/mcp-kali-server/
+   sudo rm -rf /tmp/mcp-kali-server
+   sudo chown -R mcpserver:mcpserver /opt/mcp-kali-server
+   ```
+
+   **Important**: You'll need to push the corrected files to GitHub first:
+   ```bash
+   # From your Windows development directory:
+   git add -A
+   git commit -m "Fix ngrok integration and auth dependency issues"
+   git push origin main
    ```
 
 2. **Install dependencies**:

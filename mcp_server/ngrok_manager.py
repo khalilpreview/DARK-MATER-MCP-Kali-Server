@@ -47,13 +47,14 @@ class NgrokManager:
             logger.error(f"Error configuring ngrok: {e}")
             return False
     
-    def start_tunnel(self, port: int, protocol: str = "http") -> Optional[str]:
+    def start_tunnel(self, port: int, protocol: str = "http", domain: Optional[str] = None) -> Optional[str]:
         """
         Start ngrok tunnel for the specified port.
         
         Args:
             port: Local port to tunnel
             protocol: Protocol (http or https)
+            domain: Optional custom domain (requires paid plan)
             
         Returns:
             Public URL if successful, None otherwise
@@ -64,9 +65,14 @@ class NgrokManager:
             # Configure ngrok settings
             conf.get_default().monitor_thread = False
             
-            # Create tunnel
+            # Create tunnel with optional domain
             logger.info(f"Starting ngrok tunnel for port {port}...")
-            self.tunnel = ngrok.connect(port, protocol)
+            if domain:
+                logger.info(f"Using custom domain: {domain}")
+                self.tunnel = ngrok.connect(port, protocol, hostname=domain)
+            else:
+                self.tunnel = ngrok.connect(port, protocol)
+            
             self.public_url = self.tunnel.public_url
             
             logger.info(f"Ngrok tunnel established: {self.public_url}")
