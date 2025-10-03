@@ -1,0 +1,27 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "net.scan_basic",
+  "description": "Basic network scan using nmap with safety constraints",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "pattern": "^[0-9A-Za-z.:/_-]+$",
+      "description": "Target IP address, hostname, or CIDR range",
+      "examples": ["192.168.1.1", "example.com", "10.0.0.0/24"]
+    },
+    "ports": {
+      "type": "string",
+      "pattern": "^[0-9,-]*$",
+      "description": "Port specification (e.g., '80,443' or '1-1000')",
+      "examples": ["80,443", "1-1000", "22,80,443,8080"]
+    },
+    "fast": {
+      "type": "boolean",
+      "default": true,
+      "description": "Use fast scan mode (less comprehensive but faster)"
+    }
+  },
+  "required": ["target"],
+  "additionalProperties": false
+}

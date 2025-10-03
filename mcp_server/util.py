@@ -26,12 +26,17 @@ def load_schema(tool_name: str) -> Optional[Dict[str, Any]]:
         Schema dictionary or None if not found
     """
     try:
-        schema_file = SCHEMA_DIR / f"{tool_name}.json"
-        if not schema_file.exists():
-            logger.error(f"Schema file not found: {schema_file}")
+        # Use string path to avoid Windows path issues
+        schema_file_str = str(SCHEMA_DIR / f"{tool_name}.json")
+        logger.debug(f"Looking for schema file: {schema_file_str}")
+        
+        # Check using os.path.exists
+        import os
+        if not os.path.exists(schema_file_str):
+            logger.error(f"Schema file not found: {schema_file_str}")
             return None
             
-        with open(schema_file, 'r') as f:
+        with open(schema_file_str, 'r', encoding='utf-8') as f:
             schema = json.load(f)
             
         logger.debug(f"Loaded schema for {tool_name}")

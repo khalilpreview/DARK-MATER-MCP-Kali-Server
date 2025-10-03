@@ -155,12 +155,27 @@ def load_api_credentials() -> Dict[str, ServerCredentials]:
             data = json.load(f)
             
         credentials = {}
-        for server_id, cred_data in data.items():
+        
+        # Handle both formats: single credential object or dictionary of credentials
+        if 'server_id' in data and 'api_key' in data:
+            # Single credential format (from smart_start.py)
+            server_id = data['server_id']
+            cred_data = data.copy()
+            
             # Convert string timestamp back to datetime
             if 'created' in cred_data and isinstance(cred_data['created'], str):
                 cred_data['created'] = datetime.fromisoformat(cred_data['created'])
                 
             credentials[server_id] = ServerCredentials(**cred_data)
+            
+        else:
+            # Multiple credentials format (dictionary)
+            for server_id, cred_data in data.items():
+                # Convert string timestamp back to datetime
+                if 'created' in cred_data and isinstance(cred_data['created'], str):
+                    cred_data['created'] = datetime.fromisoformat(cred_data['created'])
+                    
+                credentials[server_id] = ServerCredentials(**cred_data)
             
         return credentials
         
