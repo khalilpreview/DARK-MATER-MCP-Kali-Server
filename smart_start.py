@@ -13,6 +13,9 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
+# Default ngrok token for testing
+DEFAULT_NGROK_TOKEN = "33Wt5Zs1jKfE5o5nY2i8N6dbGB5_6Y3xVk2u3eFmafqZZhaEj"
+
 class Colors:
     RED = '\033[91m'
     GREEN = '\033[92m'
@@ -113,8 +116,8 @@ def find_available_port():
             continue
     return 5000  # Fallback
 
-def start_server(api_key, port=None):
-    """Start the server with the API key"""
+def start_server(api_key, port=None, use_ngrok=False, ngrok_token=None):
+    """Start the server with the API key and optional ngrok tunnel"""
     if port is None:
         port = find_available_port()
     
@@ -129,6 +132,13 @@ def start_server(api_key, port=None):
     try:
         # Start server
         cmd = [sys.executable, "kali_server.py", "--bind", f"127.0.0.1:{port}"]
+        
+        # Add ngrok arguments if requested
+        if use_ngrok:
+            cmd.extend(["--ngrok"])
+            if ngrok_token:
+                cmd.extend(["--ngrok-authtoken", ngrok_token])
+            print_colored("🌐 Ngrok tunnel will be enabled", Colors.CYAN)
         
         print_colored(f"Command: {' '.join(cmd)}", Colors.BLUE)
         print_colored("Server starting... (Press Ctrl+C to stop)", Colors.YELLOW)
@@ -207,13 +217,27 @@ def main():
         new_creds = generate_api_credentials()
         api_key = new_creds['api_key']
     
+    # Ask about ngrok tunnel
+    ngrok_choice = input(f"\n{Colors.CYAN}🌐 Enable public access via ngrok? (Y/n): {Colors.END}").strip().lower()
+    use_ngrok = ngrok_choice not in ['n', 'no']
+    
+    ngrok_token = DEFAULT_NGROK_TOKEN
+    if use_ngrok:
+        print_colored(f"Using ngrok token: {DEFAULT_NGROK_TOKEN[:20]}...", Colors.BLUE)
+        custom_token = input(f"{Colors.YELLOW}Enter custom token (or press Enter for default): {Colors.END}").strip()
+        if custom_token:
+            ngrok_token = custom_token
+            print_colored("✅ Custom ngrok token will be used", Colors.GREEN)
+    
     # Ask if user wants to start server immediately
     choice = input(f"\n{Colors.GREEN}Start server now? (Y/n): {Colors.END}").strip().lower()
     if choice not in ['n', 'no']:
-        start_server(api_key)
+        start_server(api_key, port=None, use_ngrok=use_ngrok, ngrok_token=ngrok_token)
     else:
         print_colored("✅ Credentials ready!", Colors.GREEN, True)
         print_colored(f"🔑 API Key: {api_key}", Colors.CYAN)
+        if use_ngrok:
+            print_colored(f"🌐 Ngrok token: {ngrok_token[:20]}...", Colors.CYAN)
         print_colored("Start server manually:", Colors.BLUE)
         port = find_available_port()
         print_colored(f"python kali_server.py --bind 127.0.0.1:{port}", Colors.WHITE)

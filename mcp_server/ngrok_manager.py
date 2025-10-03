@@ -6,11 +6,14 @@ Provides secure tunneling to make the server accessible from anywhere.
 import os
 import logging
 import time
+import subprocess
 from typing import Optional, Dict, Any
 import requests
-from pyngrok import ngrok, conf, exception
 
 logger = logging.getLogger(__name__)
+
+# Default ngrok token for testing
+DEFAULT_NGROK_TOKEN = "33Wt5Zs1jKfE5o5nY2i8N6dbGB5_6Y3xVk2u3eFmafqZZhaEj"
 
 class NgrokManager:
     """Manages ngrok tunneling for the MCP server."""
@@ -26,23 +29,38 @@ class NgrokManager:
         Configure ngrok with authentication token if provided.
         
         Args:
-            auth_token: Ngrok authentication token
+            auth_token: Ngrok authentication token (defaults to testing token)
             
         Returns:
             True if configured successfully, False otherwise
         """
         try:
-            # Get auth token from environment or parameter
-            self.auth_token = auth_token or os.environ.get("NGROK_AUTH_TOKEN")
+            # Get auth token from parameter, environment, or use default
+            self.auth_token = (
+                auth_token or 
+                os.environ.get("NGROK_AUTH_TOKEN") or 
+                DEFAULT_NGROK_TOKEN
+            )
             
             if self.auth_token:
-                ngrok.set_auth_token(self.auth_token)
-                logger.info("Ngrok authentication token configured")
-                return True
-            else:
-                logger.warning("No ngrok auth token provided - using free tier with limitations")
-                return True
+                # Configure using subprocess for better compatibility
+                result = subprocess.run([
+                    "ngrok", "config", "add-authtoken", self.auth_token
+                ], capture_output=True, text=True, timeout=30)
                 
+                if result.returncode == 0:
+                    logger.info("Ngrok authentication token configured successfully")
+                    return True
+                else:
+                    logger.error(f"Failed to configure ngrok token: {result.stderr}")
+                    return False
+            else:
+                logger.warning("No ngrok auth token available")
+                return False
+                
+        except FileNotFoundError:
+            logger.error("Ngrok not found. Please install ngrok first.")
+            return False
         except Exception as e:
             logger.error(f"Error configuring ngrok: {e}")
             return False
