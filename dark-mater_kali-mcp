@@ -258,13 +258,15 @@ class DarkMaterCLI:
             print(f"{Colors.WHITE}1.{Colors.END} 📊 Server Status")
             print(f"{Colors.WHITE}2.{Colors.END} 🔄 Restart Server")
             print(f"{Colors.WHITE}3.{Colors.END} 📋 View Logs")
-            print(f"{Colors.WHITE}4.{Colors.END} 🧪 Test Health")
-            print(f"{Colors.WHITE}5.{Colors.END} 📁 View Artifacts")
-            print(f"{Colors.WHITE}6.{Colors.END} 🛑 Stop Server")
-            print(f"{Colors.WHITE}7.{Colors.END} ❌ Exit")
+            print(f"{Colors.WHITE}4.{Colors.END} 🧪 Test Health (Detailed)")
+            print(f"{Colors.WHITE}5.{Colors.END} � Enrollment Manager")
+            print(f"{Colors.WHITE}6.{Colors.END} 🌐 Ngrok Status")
+            print(f"{Colors.WHITE}7.{Colors.END} �📁 View Artifacts")
+            print(f"{Colors.WHITE}8.{Colors.END} 🛑 Stop Server")
+            print(f"{Colors.WHITE}9.{Colors.END} ❌ Exit")
             
             try:
-                choice = input(f"\n{Colors.GREEN}Select option (1-7): {Colors.END}").strip()
+                choice = input(f"\n{Colors.GREEN}Select option (1-9): {Colors.END}").strip()
                 
                 if choice == "1":
                     self.display_server_info()
@@ -273,17 +275,21 @@ class DarkMaterCLI:
                 elif choice == "3":
                     self.view_logs()
                 elif choice == "4":
-                    self.test_health()
+                    self.test_health_detailed()
                 elif choice == "5":
-                    self.view_artifacts()
+                    self.enrollment_manager()
                 elif choice == "6":
+                    self.check_ngrok_status()
+                elif choice == "7":
+                    self.view_artifacts()
+                elif choice == "8":
                     self.stop_server()
                     break
-                elif choice == "7":
+                elif choice == "9":
                     self.stop_server()
                     break
                 else:
-                    self.print_colored("❌ Invalid choice. Please select 1-7.", Colors.RED)
+                    self.print_colored("❌ Invalid choice. Please select 1-9.", Colors.RED)
                     
             except KeyboardInterrupt:
                 self.print_colored("\n\n🛑 Interrupted by user", Colors.YELLOW)
@@ -302,34 +308,376 @@ class DarkMaterCLI:
         
     def view_logs(self):
         """View server logs"""
-        if self.server_process and self.server_process.poll() is None:
-            self.print_colored("📋 Recent server output:", Colors.CYAN, True)
-            try:
-                # This is a simplified version - in practice you'd implement proper log tailing
-                self.print_colored("Server is running in background. Check systemd logs for full output.", Colors.YELLOW)
-            except:
-                pass
-        else:
-            self.print_colored("❌ Server is not running", Colors.RED)
-            
-    def test_health(self):
-        """Test server health"""
-        credentials = self.get_server_credentials()
-        if not credentials:
-            self.print_colored("❌ Server not enrolled. Cannot test health.", Colors.RED)
+        log_file = "/var/log/mcp-kali-server.log"
+        
+        self.print_colored("📋 Server Logs", Colors.CYAN, True)
+        self.print_separator()
+        
+        if not Path(log_file).exists():
+            self.print_colored("❌ Log file not found", Colors.RED)
             return
             
-        self.print_colored("🧪 Testing server health...", Colors.CYAN, True)
+        print(f"{Colors.WHITE}1.{Colors.END} 📄 Show last 50 lines")
+        print(f"{Colors.WHITE}2.{Colors.END} ⏯️  Follow logs (live)")
+        print(f"{Colors.WHITE}3.{Colors.END} 🔍 Search logs")
+        print(f"{Colors.WHITE}4.{Colors.END} ⬅️  Back to menu")
+        
+        choice = input(f"\n{Colors.GREEN}Select option (1-4): {Colors.END}").strip()
+        
+        try:
+            if choice == "1":
+                self.print_colored("\n📄 Last 50 lines:", Colors.BLUE, True)
+                result = subprocess.run(['tail', '-50', log_file], capture_output=True, text=True)
+                print(result.stdout)
+                
+            elif choice == "2":
+                self.print_colored("⏯️  Following logs (Press Ctrl+C to stop):", Colors.BLUE, True)
+                try:
+                    subprocess.run(['tail', '-f', log_file])
+                except KeyboardInterrupt:
+                    self.print_colored("\n✅ Stopped following logs", Colors.GREEN)
+                    
+            elif choice == "3":
+                search_term = input(f"{Colors.GREEN}Enter search term: {Colors.END}").strip()
+                if search_term:
+                    self.print_colored(f"\n🔍 Searching for '{search_term}':", Colors.BLUE, True)
+                    result = subprocess.run(['grep', '-n', search_term, log_file], capture_output=True, text=True)
+                    if result.stdout:
+                        print(result.stdout)
+                    else:
+                        self.print_colored("No matches found", Colors.YELLOW)
+                        
+        except Exception as e:
+            self.print_colored(f"❌ Error viewing logs: {e}", Colors.RED)
+            
+    def test_health_detailed(self):
+        """Test server health with detailed debugging"""
+        self.print_colored("🧪 Detailed Health Check", Colors.CYAN, True)
+        self.print_separator()
+        
+        # Step 1: Check if server process is running
+        self.print_colored("1️⃣ Checking server process...", Colors.BLUE, True)
+        try:
+            result = subprocess.run(['pgrep', '-f', 'kali_server.py'], capture_output=True, text=True)
+            if result.returncode == 0:
+                pids = result.stdout.strip().split('\n')
+                self.print_colored(f"✅ Server process running (PIDs: {', '.join(pids)})", Colors.GREEN)
+            else:
+                self.print_colored("❌ Server process not found", Colors.RED)
+                return
+        except Exception as e:
+            self.print_colored(f"❌ Error checking process: {e}", Colors.RED)
+            return
+            
+        # Step 2: Check port binding
+        self.print_colored("\n2️⃣ Checking port 5000...", Colors.BLUE, True)
+        try:
+            result = subprocess.run(['netstat', '-tlnp'], capture_output=True, text=True)
+            if ':5000' in result.stdout:
+                self.print_colored("✅ Port 5000 is bound", Colors.GREEN)
+            else:
+                self.print_colored("❌ Port 5000 not bound", Colors.RED)
+        except Exception as e:
+            self.print_colored(f"❌ Error checking port: {e}", Colors.RED)
+            
+        # Step 3: Test basic connectivity
+        self.print_colored("\n3️⃣ Testing basic connectivity...", Colors.BLUE, True)
+        try:
+            response = requests.get("http://localhost:5000/health", timeout=5)
+            self.print_colored(f"✅ Server responding with status: {response.status_code}", Colors.GREEN)
+            
+            if response.status_code == 403:
+                self.print_colored("ℹ️  403 Forbidden - Server requires enrollment", Colors.YELLOW)
+            elif response.status_code == 401:
+                self.print_colored("ℹ️  401 Unauthorized - Missing API key", Colors.YELLOW)
+                
+        except requests.exceptions.ConnectionError:
+            self.print_colored("❌ Connection refused - server not responding", Colors.RED)
+            return
+        except requests.exceptions.Timeout:
+            self.print_colored("❌ Request timeout - server too slow", Colors.RED)
+            return
+        except Exception as e:
+            self.print_colored(f"❌ Request failed: {e}", Colors.RED)
+            return
+            
+        # Step 4: Check enrollment status
+        self.print_colored("\n4️⃣ Checking enrollment status...", Colors.BLUE, True)
+        enrollment = self.get_enrollment_info()
+        credentials = self.get_server_credentials()
+        
+        if not enrollment:
+            self.print_colored("❌ No enrollment token found", Colors.RED)
+            self.print_colored("💡 Generate new token in Enrollment Manager", Colors.YELLOW)
+            return
+        else:
+            self.print_colored(f"✅ Enrollment token exists (ID: {enrollment['id']})", Colors.GREEN)
+            
+        if not credentials:
+            self.print_colored("❌ Server not enrolled with API", Colors.RED)
+            self.print_colored("💡 Use Enrollment Manager to enroll server", Colors.YELLOW)
+            return
+        else:
+            self.print_colored("✅ Server is enrolled", Colors.GREEN)
+            
+        # Step 5: Test authenticated health check
+        self.print_colored("\n5️⃣ Testing authenticated health check...", Colors.BLUE, True)
         health = self.check_server_health(credentials.get('api_key'))
         
         if health:
-            self.print_colored("✅ Server is healthy!", Colors.GREEN, True)
+            self.print_colored("✅ Authenticated health check successful!", Colors.GREEN, True)
             self.print_colored(f"Server ID: {health.get('server_id', 'Unknown')}", Colors.WHITE)
-            self.print_colored(f"Available Tools: {health.get('available_tools', 0)}", Colors.WHITE)
-            if health.get('ngrok_tunnel', {}).get('public_url'):
-                self.print_colored(f"Public URL: {health['ngrok_tunnel']['public_url']}", Colors.CYAN)
+            self.print_colored(f"Capabilities: {health.get('caps', {})}", Colors.WHITE)
+            self.print_colored(f"Server Time: {health.get('time', 'Unknown')}", Colors.WHITE)
+            
+            if health.get('ngrok_tunnel'):
+                tunnel_info = health['ngrok_tunnel']
+                self.print_colored(f"🌐 Ngrok Status: {tunnel_info.get('status', 'unknown')}", Colors.CYAN)
+                if tunnel_info.get('public_url'):
+                    self.print_colored(f"🔗 Public URL: {tunnel_info['public_url']}", Colors.CYAN)
+                if tunnel_info.get('error'):
+                    self.print_colored(f"❌ Ngrok Error: {tunnel_info['error']}", Colors.RED)
         else:
-            self.print_colored("❌ Server is not responding", Colors.RED, True)
+            self.print_colored("❌ Authenticated health check failed", Colors.RED, True)
+            self.print_colored("💡 Check API key or server enrollment", Colors.YELLOW)
+            
+        self.print_separator()
+    
+    def enrollment_manager(self):
+        """Manage server enrollment"""
+        while True:
+            self.print_colored("\n🔑 Enrollment Manager", Colors.CYAN, True)
+            self.print_separator()
+            
+            enrollment = self.get_enrollment_info()
+            credentials = self.get_server_credentials()
+            
+            # Show current status
+            if enrollment:
+                self.print_colored(f"📋 Current Token:", Colors.GREEN, True)
+                self.print_colored(f"   ID: {enrollment['id']}", Colors.WHITE)
+                self.print_colored(f"   Created: {enrollment['created']}", Colors.WHITE)
+                
+            if credentials:
+                self.print_colored(f"\n✅ Enrollment Status: ENROLLED", Colors.GREEN, True)
+                self.print_colored(f"   Label: {credentials['label']}", Colors.WHITE)
+                self.print_colored(f"   API Key: {credentials['api_key'][:20]}...", Colors.WHITE)
+            else:
+                self.print_colored(f"\n❌ Enrollment Status: NOT ENROLLED", Colors.RED, True)
+                
+            # Show menu
+            print(f"\n{Colors.WHITE}1.{Colors.END} 🔄 Generate New Token")
+            print(f"{Colors.WHITE}2.{Colors.END} 📝 Enroll Server")
+            print(f"{Colors.WHITE}3.{Colors.END} 🗑️  Delete Enrollment")
+            print(f"{Colors.WHITE}4.{Colors.END} 📋 Show Enrollment Command")
+            print(f"{Colors.WHITE}5.{Colors.END} ⬅️  Back to Main Menu")
+            
+            choice = input(f"\n{Colors.GREEN}Select option (1-5): {Colors.END}").strip()
+            
+            if choice == "1":
+                self.generate_new_enrollment_token()
+            elif choice == "2":
+                self.enroll_server()
+            elif choice == "3":
+                self.delete_enrollment()
+            elif choice == "4":
+                self.show_enrollment_command()
+            elif choice == "5":
+                break
+            else:
+                self.print_colored("❌ Invalid choice. Please select 1-5.", Colors.RED)
+                
+    def generate_new_enrollment_token(self):
+        """Generate a new enrollment token"""
+        self.print_colored("🔄 Generating new enrollment token...", Colors.CYAN, True)
+        
+        try:
+            import secrets
+            import socket
+            from datetime import datetime
+            
+            # Generate new token
+            server_id = f'kali-{socket.gethostname()}-{int(datetime.now().timestamp())}'
+            token = secrets.token_urlsafe(32)
+            
+            enrollment_data = {
+                'id': server_id,
+                'token': token,
+                'created': datetime.now().isoformat()
+            }
+            
+            # Ensure directory exists
+            os.makedirs(self.config_dir, exist_ok=True)
+            
+            # Save enrollment token
+            enroll_file = f"{self.config_dir}/enroll.json"
+            with open(enroll_file, 'w') as f:
+                json.dump(enrollment_data, f, indent=2)
+                
+            # Set proper permissions
+            os.chmod(enroll_file, 0o600)
+            
+            self.print_colored("✅ New enrollment token generated!", Colors.GREEN, True)
+            self.print_colored(f"Server ID: {server_id}", Colors.WHITE)
+            self.print_colored(f"Token: {token[:20]}...", Colors.WHITE)
+            
+        except Exception as e:
+            self.print_colored(f"❌ Failed to generate token: {e}", Colors.RED, True)
+            
+    def enroll_server(self):
+        """Enroll the server with the API"""
+        enrollment = self.get_enrollment_info()
+        if not enrollment:
+            self.print_colored("❌ No enrollment token found. Generate one first.", Colors.RED)
+            return
+            
+        self.print_colored("📝 Enrolling server...", Colors.CYAN, True)
+        
+        # Get label from user
+        label = input(f"{Colors.GREEN}Enter server label (default: Kali-Lab): {Colors.END}").strip()
+        if not label:
+            label = "Kali-Lab"
+            
+        try:
+            # Make enrollment request
+            payload = {
+                'id': enrollment['id'],
+                'token': enrollment['token'],
+                'label': label
+            }
+            
+            self.print_colored(f"Enrolling with ID: {enrollment['id']}", Colors.BLUE)
+            
+            response = requests.post(
+                "http://localhost:5000/enroll",
+                json=payload,
+                headers={'Content-Type': 'application/json'},
+                timeout=10
+            )
+            
+            if response.status_code == 200:
+                creds_data = response.json()
+                
+                # Save credentials
+                creds_file = f"{self.config_dir}/credentials.json"
+                with open(creds_file, 'w') as f:
+                    json.dump(creds_data, f, indent=2)
+                    
+                os.chmod(creds_file, 0o600)
+                
+                self.print_colored("✅ Server enrolled successfully!", Colors.GREEN, True)
+                self.print_colored(f"Server ID: {creds_data['server_id']}", Colors.WHITE)
+                self.print_colored(f"Label: {creds_data['label']}", Colors.WHITE)
+                self.print_colored(f"API Key: {creds_data['api_key'][:20]}...", Colors.WHITE)
+                
+            else:
+                self.print_colored(f"❌ Enrollment failed: HTTP {response.status_code}", Colors.RED, True)
+                try:
+                    error_data = response.json()
+                    self.print_colored(f"Error: {error_data.get('detail', 'Unknown error')}", Colors.RED)
+                except:
+                    self.print_colored(f"Response: {response.text}", Colors.RED)
+                    
+        except requests.exceptions.ConnectionError:
+            self.print_colored("❌ Cannot connect to server. Is it running?", Colors.RED, True)
+        except Exception as e:
+            self.print_colored(f"❌ Enrollment failed: {e}", Colors.RED, True)
+            
+    def delete_enrollment(self):
+        """Delete enrollment data"""
+        confirm = input(f"{Colors.YELLOW}Delete all enrollment data? This will require re-enrollment. (y/N): {Colors.END}").strip().lower()
+        
+        if confirm in ['y', 'yes']:
+            try:
+                enroll_file = f"{self.config_dir}/enroll.json"
+                creds_file = f"{self.config_dir}/credentials.json"
+                
+                if Path(enroll_file).exists():
+                    os.remove(enroll_file)
+                    self.print_colored("🗑️  Enrollment token deleted", Colors.YELLOW)
+                    
+                if Path(creds_file).exists():
+                    os.remove(creds_file)
+                    self.print_colored("🗑️  Credentials deleted", Colors.YELLOW)
+                    
+                self.print_colored("✅ Enrollment data cleared", Colors.GREEN)
+                
+            except Exception as e:
+                self.print_colored(f"❌ Failed to delete: {e}", Colors.RED)
+        else:
+            self.print_colored("ℹ️  Deletion cancelled", Colors.BLUE)
+            
+    def show_enrollment_command(self):
+        """Show the enrollment command"""
+        enrollment = self.get_enrollment_info()
+        if not enrollment:
+            self.print_colored("❌ No enrollment token found. Generate one first.", Colors.RED)
+            return
+            
+        self.print_colored("📋 Enrollment Command:", Colors.CYAN, True)
+        self.print_separator()
+        
+        cmd = f"""curl -X POST http://localhost:5000/enroll \\
+  -H "Content-Type: application/json" \\
+  -d '{{"id":"{enrollment['id']}","token":"{enrollment['token']}","label":"Kali-Lab"}}'"""
+        
+        self.print_colored(cmd, Colors.WHITE)
+        self.print_separator()
+        
+    def check_ngrok_status(self):
+        """Check ngrok tunnel status"""
+        self.print_colored("🌐 Ngrok Tunnel Status", Colors.CYAN, True)
+        self.print_separator()
+        
+        # Check if ngrok process is running
+        try:
+            result = subprocess.run(['pgrep', '-f', 'ngrok'], capture_output=True, text=True)
+            if result.returncode == 0:
+                self.print_colored("✅ Ngrok process is running", Colors.GREEN)
+            else:
+                self.print_colored("❌ Ngrok process not found", Colors.RED)
+        except:
+            self.print_colored("❌ Could not check ngrok process", Colors.RED)
+            
+        # Check server health for ngrok info
+        credentials = self.get_server_credentials()
+        if credentials:
+            health = self.check_server_health(credentials.get('api_key'))
+            if health and health.get('ngrok_tunnel'):
+                tunnel_info = health['ngrok_tunnel']
+                
+                self.print_colored(f"\n📊 Tunnel Information:", Colors.BLUE, True)
+                self.print_colored(f"Status: {tunnel_info.get('status', 'unknown')}", Colors.WHITE)
+                
+                if tunnel_info.get('public_url'):
+                    self.print_colored(f"Public URL: {tunnel_info['public_url']}", Colors.GREEN)
+                    
+                if tunnel_info.get('config'):
+                    config = tunnel_info['config']
+                    self.print_colored(f"Local Address: {config.get('addr', 'unknown')}", Colors.WHITE)
+                    self.print_colored(f"Protocol: {config.get('proto', 'unknown')}", Colors.WHITE)
+                    if config.get('domain'):
+                        self.print_colored(f"Custom Domain: {config['domain']}", Colors.WHITE)
+                        
+                if tunnel_info.get('error'):
+                    self.print_colored(f"\n❌ Ngrok Error: {tunnel_info['error']}", Colors.RED, True)
+                    
+                    # Common ngrok errors and solutions
+                    error_msg = tunnel_info['error'].lower()
+                    if 'invalid authtoken' in error_msg:
+                        self.print_colored("💡 Solution: Check your ngrok auth token", Colors.YELLOW)
+                        self.print_colored("   Get token from: https://dashboard.ngrok.com/get-started/your-authtoken", Colors.YELLOW)
+                    elif 'domain not found' in error_msg:
+                        self.print_colored("💡 Solution: Check custom domain or remove it", Colors.YELLOW)
+                    elif 'account limit' in error_msg:
+                        self.print_colored("💡 Solution: Upgrade ngrok plan or stop other tunnels", Colors.YELLOW)
+                        
+            else:
+                self.print_colored("ℹ️  No ngrok tunnel information available", Colors.YELLOW)
+        else:
+            self.print_colored("❌ Cannot check tunnel status - server not enrolled", Colors.RED)
+            
+        self.print_separator()
             
     def view_artifacts(self):
         """View artifacts directory"""
