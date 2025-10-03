@@ -17,10 +17,15 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-# Configuration paths
-ENROLL_FILE = Path("/etc/mcp-kali/enroll.json")
-CREDENTIALS_FILE = Path("/etc/mcp-kali/credentials.json")
-CONFIG_DIR = Path("/etc/mcp-kali")
+# Configuration paths - handle both Windows and Linux
+import os
+if os.name == 'nt':  # Windows
+    CONFIG_DIR = Path.home() / ".mcp-kali"
+else:  # Linux/Unix
+    CONFIG_DIR = Path("/etc/mcp-kali")
+
+ENROLL_FILE = CONFIG_DIR / "enroll.json"
+CREDENTIALS_FILE = CONFIG_DIR / "credentials.json"
 
 class EnrollmentData(BaseModel):
     """Enrollment token data model."""

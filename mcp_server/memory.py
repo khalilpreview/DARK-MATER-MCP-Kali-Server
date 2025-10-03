@@ -6,6 +6,7 @@ Handles observation recording and lightweight fact persistence.
 import json
 import logging
 import sqlite3
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, Any, List, Optional
@@ -13,8 +14,12 @@ import threading
 
 logger = logging.getLogger(__name__)
 
-# Memory storage configuration
-MEMORY_BASE_DIR = Path("/var/lib/mcp/memory")
+# Memory storage configuration - handle both Windows and Linux
+if os.name == 'nt':  # Windows
+    MEMORY_BASE_DIR = Path.home() / ".mcp-kali" / "memory"
+else:  # Linux/Unix
+    MEMORY_BASE_DIR = Path("/var/lib/mcp/memory")
+    
 MEMORY_DB_FILE = MEMORY_BASE_DIR / "observations.db"
 
 class MemoryManager:
@@ -279,10 +284,12 @@ class MemoryManager:
             Number of observations deleted
         """
         try:
+            from datetime import timedelta
+            
             cutoff_date = datetime.now(timezone.utc).replace(
                 hour=0, minute=0, second=0, microsecond=0
             )
-            cutoff_date = cutoff_date.replace(day=cutoff_date.day - days_to_keep)
+            cutoff_date = cutoff_date - timedelta(days=days_to_keep)
             
             with self._lock:
                 with sqlite3.connect(self.db_path) as conn:

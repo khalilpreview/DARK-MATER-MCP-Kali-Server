@@ -7,14 +7,18 @@ import json
 import socket
 import ipaddress
 import logging
+import os
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Union
 from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-# Configuration path
-SCOPE_CONFIG_FILE = Path("/etc/mcp-kali/scope.json")
+# Configuration path - handle both Windows and Linux
+if os.name == 'nt':  # Windows
+    SCOPE_CONFIG_FILE = Path.home() / ".mcp-kali" / "scope.json"
+else:  # Linux/Unix
+    SCOPE_CONFIG_FILE = Path("/etc/mcp-kali/scope.json")
 
 class ScopeConfig(BaseModel):
     """Scope configuration model."""

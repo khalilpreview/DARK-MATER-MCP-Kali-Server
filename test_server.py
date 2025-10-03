@@ -33,8 +33,25 @@ def test_server():
     
     # Step 1: Check if server is running
     print_colored("\n1️⃣ Checking if server is running...", "blue")
+    
+    # Try different ports in case 5000 is busy
+    server_url = None
+    for port in [5000, 5001, 5002]:
+        try:
+            response = requests.get(f"http://localhost:{port}/health", timeout=2)
+            server_url = f"http://localhost:{port}"
+            print_colored(f"✅ Found server on port {port}", "green")
+            break
+        except requests.exceptions.ConnectionError:
+            continue
+    
+    if not server_url:
+        print_colored("❌ Server not running on ports 5000-5002", "red")
+        print_colored("💡 Start server with: python kali_server.py --bind 127.0.0.1:5001", "yellow")
+        return False
+    
     try:
-        response = requests.get("http://localhost:5000/health", timeout=5)
+        response = requests.get(f"{server_url}/health", timeout=5)
         print_colored(f"✅ Server responding with status: {response.status_code}", "green")
         
         if response.status_code == 403:
@@ -83,7 +100,7 @@ def test_server():
         }
         
         response = requests.post(
-            "http://localhost:5000/enroll",
+            f"{server_url}/enroll",
             json=payload,
             headers={'Content-Type': 'application/json'},
             timeout=10
@@ -115,7 +132,7 @@ def test_server():
     print_colored("\n4️⃣ Testing authenticated health check...", "blue")
     try:
         response = requests.get(
-            "http://localhost:5000/health",
+            f"{server_url}/health",
             headers={'Authorization': f'Bearer {api_key}'},
             timeout=5
         )
@@ -145,7 +162,7 @@ def test_server():
     print_colored("\n5️⃣ Testing tools endpoint...", "blue")
     try:
         response = requests.get(
-            "http://localhost:5000/tools/list",
+            f"{server_url}/tools/list",
             headers={'Authorization': f'Bearer {api_key}'},
             timeout=5
         )
@@ -168,7 +185,7 @@ def test_server():
     print_colored("=" * 50, "blue")
     print_colored(f"💾 Credentials saved to: temp_config/credentials.json", "cyan")
     print_colored(f"🔑 API Key: {api_key}", "cyan")
-    print_colored("🌐 Server URL: http://localhost:5000", "cyan")
+    print_colored(f"🌐 Server URL: {server_url}", "cyan")
     
     return True
 
