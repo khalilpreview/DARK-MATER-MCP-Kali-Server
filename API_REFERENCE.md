@@ -106,6 +106,70 @@ Authorization: Bearer api_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 }
 ```
 
+**Metasploit Exploit Example (Vulnerability Check):**
+
+```json
+{
+  "name": "metasploit.exploit",
+  "arguments": {
+    "module": "exploit/windows/smb/ms17_010_eternalblue",
+    "target": "192.168.1.100",
+    "check_only": true,
+    "safe_mode": true
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "rc": 0,
+  "summary": "Vulnerability check completed for 192.168.1.100 using exploit/windows/smb/ms17_010_eternalblue",
+  "artifact_uri": "artifact://server-id/run-id/raw.txt",
+  "findings": [
+    {
+      "type": "vulnerability",
+      "message": "Target appears to be VULNERABLE to MS17-010 EternalBlue",
+      "severity": "high"
+    }
+  ]
+}
+```
+
+**Metasploit Auxiliary Example (SMB Scanner):**
+
+```json
+{
+  "name": "metasploit.auxiliary",
+  "arguments": {
+    "module": "auxiliary/scanner/smb/smb_version",
+    "target": "192.168.1.0/24",
+    "threads": 10
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "rc": 0,
+  "summary": "Auxiliary scan completed on 192.168.1.0/24 using auxiliary/scanner/smb/smb_version - 3 findings",
+  "artifact_uri": "artifact://server-id/run-id/raw.txt",
+  "findings": [
+    {
+      "type": "success",
+      "message": "192.168.1.100:445 - Windows Server 2016 Standard 14393",
+      "severity": "info"
+    },
+    {
+      "type": "success", 
+      "message": "192.168.1.101:445 - Windows 10 Enterprise 19041",
+      "severity": "info"
+    }
+  ]
+}
+```
+
 ---
 
 ### 📦 Artifacts

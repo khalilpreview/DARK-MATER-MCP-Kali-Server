@@ -28,9 +28,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Import the FastAPI app and ngrok manager
+# Import the FastAPI app and components
 from mcp_server.api import app
 from mcp_server.ngrok_manager import NgrokManager
+from mcp_server.licensing import validate_server_license
 
 def get_tls_config():
     """
@@ -103,6 +104,11 @@ def parse_args():
         type=str,
         help="Custom ngrok domain (requires paid plan)"
     )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Disable target restrictions and allow unrestricted tool execution (DANGEROUS)"
+    )
     return parser.parse_args()
 
 def main():
@@ -165,6 +171,28 @@ def main():
         except Exception as e:
             logger.error(f"Failed to setup ngrok tunnel: {e}")
             sys.exit(1)
+    
+    # Validate license before starting server
+    logger.info("Validating server license...")
+    if not validate_server_license():
+        logger.critical("License validation failed - server will not start")
+        sys.exit(1)
+    logger.info("License validation successful")
+    
+    # Initialize tool manager with force mode setting
+    if args.force:
+        logger.warning("FORCE MODE ENABLED - Target restrictions disabled! This is DANGEROUS in production!")
+        os.environ['MCP_FORCE_MODE'] = 'true'
+    
+    # Initialize the tool manager to load registry
+    try:
+        from mcp_tools.manager import get_tool_manager
+        tool_manager = get_tool_manager(force_mode=args.force)
+        available_tools = len([t for t in tool_manager.list_tools() if t['available']])
+        logger.info(f"Tool manager initialized with {available_tools} available tools")
+    except Exception as e:
+        logger.error(f"Failed to initialize tool manager: {e}")
+        # Don't exit - tool manager is optional
     
     # Get TLS configuration
     ssl_keyfile, ssl_certfile, ssl_ca_certs = get_tls_config()

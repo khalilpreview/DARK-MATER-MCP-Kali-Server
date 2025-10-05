@@ -233,6 +233,32 @@ def is_destructive(tool_name: str, args: Dict[str, Any]) -> bool:
             'bruteforce': {
                 # Password attacks are destructive
                 'always_destructive': True,
+            },
+            'metasploit.exploit': {
+                # Metasploit exploits are destructive unless check_only=True
+                'check_destructive_args': ['check_only'],
+                'safe_if_check_only': True,
+            },
+            'metasploit.auxiliary': {
+                # Most auxiliary modules are safe, but some can be destructive
+                'destructive_modules': [
+                    'auxiliary/dos/',  # Denial of service modules
+                    'auxiliary/admin/',  # Administrative modules
+                    'auxiliary/scanner/smb/smb_login',  # Brute force
+                    'auxiliary/scanner/ssh/ssh_login',  # Brute force
+                    'auxiliary/scanner/ftp/ftp_login',  # Brute force
+                    'auxiliary/scanner/telnet/telnet_login',  # Brute force
+                    'auxiliary/scanner/mysql/mysql_login',  # Brute force
+                    'auxiliary/scanner/mssql/mssql_login',  # Brute force
+                    'auxiliary/gather/',  # Information gathering (potentially invasive)
+                ],
+                'safe_modules': [
+                    'auxiliary/scanner/smb/smb_version',
+                    'auxiliary/scanner/ssh/ssh_version',
+                    'auxiliary/scanner/http/http_version',
+                    'auxiliary/scanner/ftp/ftp_version',
+                    'auxiliary/scanner/discovery/',
+                ]
             }
         }
         
@@ -258,6 +284,36 @@ def is_destructive(tool_name: str, args: Dict[str, Any]) -> bool:
                             return False
                         logger.debug(f"Tool {tool_name} using destructive scan type: {destructive_scan}")
                         return True
+            
+            # Metasploit exploit specific checks
+            if tool_name == 'metasploit.exploit':
+                # If check_only is True, it's not destructive
+                if args.get('check_only', True):
+                    logger.debug(f"Metasploit exploit in check-only mode, not destructive")
+                    return False
+                else:
+                    logger.debug(f"Metasploit exploit with execution enabled, destructive")
+                    return True
+            
+            # Metasploit auxiliary specific checks
+            if tool_name == 'metasploit.auxiliary':
+                module = args.get('module', '')
+                
+                # Check if module is explicitly safe
+                for safe_module in pattern.get('safe_modules', []):
+                    if module.startswith(safe_module) or module == safe_module:
+                        logger.debug(f"Metasploit auxiliary module {module} is in safe list")
+                        return False
+                
+                # Check if module is explicitly destructive
+                for destructive_module in pattern.get('destructive_modules', []):
+                    if module.startswith(destructive_module) or module == destructive_module:
+                        logger.debug(f"Metasploit auxiliary module {module} is destructive")
+                        return True
+                
+                # Default: auxiliary modules are generally safe unless proven otherwise
+                logger.debug(f"Metasploit auxiliary module {module} assumed safe")
+                return False
         
         # Additional heuristics
         # Check for timing attacks or aggressive timing

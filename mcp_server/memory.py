@@ -1,6 +1,7 @@
 """
 Memory module for MCP Kali Server.
 Handles observation recording and lightweight fact persistence.
+Enhanced with LLM conversation memory integration.
 """
 
 import json
@@ -417,3 +418,90 @@ def create_memory_summary(tool_name: str, target: str, findings: List[Dict[str, 
     except Exception as e:
         logger.error(f"Error creating memory summary: {e}")
         return f"{tool_name} scan of {target} completed"
+
+def bridge_llm_memory_to_observations(server_id: str, thread_id: str, 
+                                     role: str, content: str, meta: Dict[str, Any] = None):
+    """Bridge LLM conversation memory to existing observation system."""
+    try:
+        manager = get_memory_manager()
+        
+        # Convert conversation turn to observation
+        if role == "assistant" and meta and meta.get("tool_used"):
+            # Assistant responses with tool usage become observations
+            kind = f"chat_tool_response"
+            summary = f"Assistant used {meta['tool_used']}: {content[:100]}..."
+            parsed_data = {
+                "thread_id": thread_id,
+                "role": role,
+                "tool_used": meta.get("tool_used"),
+                "full_content": content
+            }
+            
+            manager.record_observation(
+                server_id=server_id,
+                kind=kind,
+                summary=summary,
+                parsed=parsed_data
+            )
+            
+        elif role == "user" and any(tool in content.lower() for tool in ["nmap", "scan", "exploit"]):
+            # User requests for security tools become observations
+            kind = "chat_security_request"
+            summary = f"User requested: {content[:100]}..."
+            parsed_data = {
+                "thread_id": thread_id,
+                "role": role,
+                "request_type": "security_tool",
+                "full_content": content
+            }
+            
+            manager.record_observation(
+                server_id=server_id,
+                kind=kind,
+                summary=summary,
+                parsed=parsed_data
+            )
+            
+    except Exception as e:
+        logger.error(f"Error bridging LLM memory to observations: {e}")
+
+def search_integrated_memory(server_id: str, query: str, limit: int = 10) -> List[Dict[str, Any]]:
+    """Search both LLM memory and observations for comprehensive results."""
+    try:
+        from .llm_db import get_llm_db
+        
+        results = []
+        
+        # Search LLM knowledge base
+        llm_db = get_llm_db()
+        knowledge_results = llm_db.search_knowledge(server_id, query, top_k=5)
+        
+        for result in knowledge_results["results"]:
+            results.append({
+                "type": "knowledge",
+                "source": result["source"],
+                "content": result["text"],
+                "score": result["score"],
+                "id": result["chunk_id"]
+            })
+        
+        # Search existing observations
+        manager = get_memory_manager()
+        observations = manager.search_memory(server_id, query)
+        
+        for obs in observations[:5]:  # Limit to top 5
+            results.append({
+                "type": "observation",
+                "source": obs.get("kind", "unknown"),
+                "content": obs.get("summary", ""),
+                "score": 0.5,  # Default score for observations
+                "id": obs.get("id", "")
+            })
+        
+        # Sort by score and return top results
+        results.sort(key=lambda x: x["score"], reverse=True)
+        return results[:limit]
+        
+    except Exception as e:
+        logger.error(f"Error searching integrated memory: {e}")
+        return []

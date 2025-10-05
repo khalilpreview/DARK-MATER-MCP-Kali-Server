@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "web.dirb",
+  "description": "Directory and file brute forcer",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "pattern": "^https?://[a-zA-Z0-9.-]+(?::[0-9]+)?(?:/.*)?$",
+      "description": "Target URL to scan"
+    },
+    "wordlist": {
+      "type": "string",
+      "enum": ["common", "big", "small", "extensions"],
+      "default": "common",
+      "description": "Wordlist to use for directory enumeration"
+    },
+    "extensions": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9,.-]*$",
+      "description": "File extensions to test (e.g., 'php,html,js')"
+    },
+    "recursive": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enable recursive scanning"
+    },
+    "silent": {
+      "type": "boolean",
+      "default": true,
+      "description": "Silent mode (don't show tested URLs)"
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 30,
+      "maximum": 600,
+      "default": 300,
+      "description": "Scan timeout in seconds"
+    }
+  },
+  "required": ["target"],
+  "additionalProperties": false
+}

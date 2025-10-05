@@ -1,0 +1,89 @@
+# Wireless Security Tools Registry
+# WiFi, Bluetooth, and wireless network security testing
+
+aircrack-ng:
+  category: wireless
+  description: "WiFi security auditing suite"
+  tools:
+    airmon: "airmon-ng start {interface}"
+    airodump: "airodump-ng -c {channel} --bssid {bssid} -w {output_prefix} {interface}"
+    aireplay: "aireplay-ng -0 5 -a {bssid} -c {client} {interface}"
+    aircrack: "aircrack-ng -w {wordlist} {capture_file}"
+  output_parser: parse_aircrack_text
+  expected_output_type: text
+  timeout: 3600
+  requires_root: true
+  safe_mode_allowed: false
+  notes: "Requires wireless interface in monitor mode"
+
+bettercap:
+  category: wireless
+  description: "Network reconnaissance and MITM framework"
+  exec_command: "bettercap -iface {interface}"
+  api_endpoint: "http://localhost:8081"
+  api_auth: "basic_auth"
+  advanced_commands:
+    wifi_scan: "wifi.recon on; wifi.show"
+    ble_scan: "ble.recon on; ble.show"
+    net_probe: "net.probe on; net.show"
+  output_parser: parse_bettercap_json
+  expected_output_type: json
+  timeout: 1800
+  requires_root: true
+  safe_mode_allowed: false
+
+kismet:
+  category: wireless
+  description: "Wireless network detector and IDS"
+  exec_command: "kismet -c {interface}"
+  api_endpoint: "http://localhost:2501"
+  output_parser: parse_kismet_json
+  expected_output_type: json
+  timeout: 3600
+  requires_root: true
+  safe_mode_allowed: true
+  notes: "Passive monitoring tool"
+
+wifite:
+  category: wireless
+  description: "Automated wireless attack tool"
+  exec_command: "wifite --no-wps --dict {wordlist}"
+  output_parser: parse_wifite_text
+  expected_output_type: text
+  timeout: 7200
+  requires_root: true
+  safe_mode_allowed: false
+
+reaver:
+  category: wireless
+  description: "WPS PIN attack tool"
+  exec_command: "reaver -i {interface} -b {bssid} -vv"
+  output_parser: parse_reaver_text
+  expected_output_type: text
+  timeout: 3600
+  requires_root: true
+  safe_mode_allowed: false
+
+fern:
+  category: wireless
+  description: "Wireless security auditing tool"
+  exec_command: "fern-wifi-cracker"
+  output_parser: parse_fern_text
+  expected_output_type: text
+  timeout: 3600
+  requires_root: true
+  safe_mode_allowed: false
+  notes: "GUI tool, requires X11 forwarding"
+
+bluez:
+  category: wireless
+  description: "Bluetooth protocol stack utilities"
+  tools:
+    hcitool: "hcitool scan"
+    l2ping: "l2ping {target_mac}"
+    bluetoothctl: "bluetoothctl scan on"
+  output_parser: parse_bluez_text
+  expected_output_type: text
+  timeout: 300
+  requires_root: true
+  safe_mode_allowed: true

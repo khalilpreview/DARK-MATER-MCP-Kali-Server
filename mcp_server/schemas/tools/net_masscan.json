@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "net.masscan",
+  "description": "High-speed network port scanner",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "pattern": "^[0-9A-Za-z.:/_-]+$",
+      "description": "Target IP address, hostname, or CIDR range"
+    },
+    "ports": {
+      "type": "string",
+      "pattern": "^[0-9,-]+$",
+      "default": "1-1000",
+      "description": "Port range to scan (e.g., '80,443' or '1-1000')"
+    },
+    "rate": {
+      "type": "integer",
+      "minimum": 100,
+      "maximum": 10000,
+      "default": 1000,
+      "description": "Packet transmission rate (packets per second)"
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 60,
+      "maximum": 600,
+      "default": 300,
+      "description": "Scan timeout in seconds"
+    },
+    "banners": {
+      "type": "boolean",
+      "default": false,
+      "description": "Attempt banner grabbing on open ports"
+    }
+  },
+  "required": ["target"],
+  "additionalProperties": false
+}

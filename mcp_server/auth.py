@@ -6,7 +6,8 @@ Handles enrollment tokens, API key generation, and credential management.
 import json
 import secrets
 import string
-from datetime import datetime, timezone
+import jwt
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, Tuple
 import logging
@@ -387,3 +388,71 @@ def create_enrollment_token(server_id: str) -> EnrollmentData:
         raise RuntimeError("Failed to save enrollment token")
     
     return enrollment
+
+# JWT Configuration
+JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-production")
+JWT_ALGORITHM = "HS256"
+JWT_EXPIRATION_HOURS = 24
+
+class TokenRequest(BaseModel):
+    """Request model for JWT token generation."""
+    api_key: Optional[str] = None
+    client_fingerprint: Optional[str] = None
+
+class TokenResponse(BaseModel):
+    """Response model for JWT token."""
+    access_token: str
+    token_type: str
+    expires_in: int
+    server_id: str
+
+def generate_jwt_token(server_id: str, expires_hours: int = JWT_EXPIRATION_HOURS) -> Dict[str, Any]:
+    """Generate a JWT token for dashboard authentication."""
+    try:
+        payload = {
+            "sub": server_id,
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=expires_hours),
+            "type": "access_token"
+        }
+        
+        token = jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
+        
+        return {
+            "access_token": token,
+            "token_type": "bearer",
+            "expires_in": expires_hours * 3600,
+            "server_id": server_id
+        }
+    except Exception as e:
+        logger.error(f"Error generating JWT token: {e}")
+        raise
+
+def verify_jwt_token(token: str) -> Optional[str]:
+    """Verify JWT token and return server_id."""
+    try:
+        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[JWT_ALGORITHM])
+        return payload.get("sub")  # server_id
+    except jwt.ExpiredSignatureError:
+        logger.warning("JWT token has expired")
+        return None
+    except jwt.InvalidTokenError as e:
+        logger.warning(f"Invalid JWT token: {e}")
+        return None
+
+def require_jwt_auth(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer())) -> str:
+    """FastAPI dependency for JWT authentication."""
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing authorization header"
+        )
+    
+    server_id = verify_jwt_token(credentials.credentials)
+    if not server_id:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token"
+        )
+    
+    return server_id

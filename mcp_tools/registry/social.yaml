@@ -1,0 +1,69 @@
+# Social Engineering Tools Registry
+# Phishing, social engineering, and human-factor security testing
+
+gophish:
+  category: social
+  description: "Phishing campaign management platform"
+  api_endpoint: "https://localhost:3333"
+  api_auth: "api_key"
+  output_parser: parse_gophish_json
+  expected_output_type: json
+  timeout: 3600
+  requires_root: false
+  safe_mode_allowed: false
+  notes: "Web-based platform with REST API"
+
+setoolkit:
+  category: social
+  description: "Social Engineer Toolkit for social engineering attacks"
+  exec_command: "setoolkit --no-update"
+  output_parser: parse_set_text
+  expected_output_type: text
+  timeout: 1800
+  requires_root: false
+  safe_mode_allowed: false
+  notes: "Interactive tool, requires script automation"
+
+maltego:
+  category: social
+  description: "Link analysis and data mining application"
+  api_endpoint: "http://localhost:8080"
+  output_parser: parse_maltego_json
+  expected_output_type: json
+  timeout: 1800
+  requires_root: false
+  safe_mode_allowed: true
+  notes: "Commercial tool with community edition"
+
+phishingfrenzy:
+  category: social
+  description: "Phishing framework for testing email security"
+  api_endpoint: "http://localhost:3000"
+  api_auth: "session_cookie"
+  output_parser: parse_frenzy_json
+  expected_output_type: json
+  timeout: 3600
+  requires_root: false
+  safe_mode_allowed: false
+
+evilginx:
+  category: social
+  description: "Man-in-the-middle phishing framework"
+  exec_command: "evilginx2 -p {phishlets_path}"
+  output_parser: parse_evilginx_text
+  expected_output_type: text
+  timeout: 3600
+  requires_root: true
+  safe_mode_allowed: false
+  notes: "Requires domain and SSL certificates"
+
+kingphisher:
+  category: social
+  description: "Phishing campaign toolkit"
+  api_endpoint: "https://localhost:443"
+  api_auth: "rpc_credentials"
+  output_parser: parse_kingphisher_json
+  expected_output_type: json
+  timeout: 3600
+  requires_root: false
+  safe_mode_allowed: false

@@ -1,0 +1,112 @@
+# Post-Exploitation Tools Registry
+# Privilege escalation, persistence, and post-compromise activities
+
+hashcat:
+  category: postex
+  description: "Advanced password recovery and hash cracking"
+  exec_command: "hashcat -m {hash_mode} {hash_file} {wordlist}"
+  advanced_commands:
+    brute_force: "hashcat -m {hash_mode} {hash_file} -a 3 ?a?a?a?a?a?a?a?a"
+    rules: "hashcat -m {hash_mode} {hash_file} {wordlist} -r {rules_file}"
+    session: "hashcat -m {hash_mode} {hash_file} {wordlist} --session {session_name}"
+  output_parser: parse_hashcat_text
+  expected_output_type: text
+  timeout: 86400  # 24 hours
+  requires_root: false
+  safe_mode_allowed: true
+
+john:
+  category: postex
+  description: "John the Ripper password cracker"
+  exec_command: "john --wordlist={wordlist} {hash_file}"
+  advanced_commands:
+    incremental: "john --incremental {hash_file}"
+    rules: "john --rules --wordlist={wordlist} {hash_file}"
+    show: "john --show {hash_file}"
+  output_parser: parse_john_text
+  expected_output_type: text
+  timeout: 86400  # 24 hours
+  requires_root: false
+  safe_mode_allowed: true
+
+hydra:
+  category: postex
+  description: "Network login brute forcer"
+  exec_command: "hydra -L {userlist} -P {passlist} {target} {service}"
+  advanced_commands:
+    single_user: "hydra -l {username} -P {passlist} {target} {service}"
+    ssh_brute: "hydra -L {userlist} -P {passlist} ssh://{target}"
+    http_brute: "hydra -L {userlist} -P {passlist} {target} http-post-form '{path}:{params}:{fail_string}'"
+  output_parser: parse_hydra_text
+  expected_output_type: text
+  timeout: 3600
+  requires_root: false
+  safe_mode_allowed: false
+
+linpeas:
+  category: postex
+  description: "Linux privilege escalation enumeration"
+  exec_command: "bash linpeas.sh -a > {output_file}"
+  output_parser: parse_linpeas_text
+  expected_output_type: text
+  timeout: 600
+  requires_root: false
+  safe_mode_allowed: true
+  notes: "Requires file upload to target system"
+
+winpeas:
+  category: postex
+  description: "Windows privilege escalation enumeration"
+  exec_command: "winPEAS.exe > {output_file}"
+  output_parser: parse_winpeas_text
+  expected_output_type: text
+  timeout: 600
+  requires_root: false
+  safe_mode_allowed: true
+  notes: "Requires file upload to target system"
+
+bloodhound:
+  category: postex
+  description: "Active Directory attack path analysis"
+  exec_command: "bloodhound-python -u {username} -p {password} -d {domain} -dc {dc_ip}"
+  api_endpoint: "http://localhost:7474"
+  output_parser: parse_bloodhound_json
+  expected_output_type: json
+  timeout: 1800
+  requires_root: false
+  safe_mode_allowed: true
+
+mimikatz:
+  category: postex
+  description: "Windows credential extraction tool"
+  exec_command: "mimikatz.exe"
+  output_parser: parse_mimikatz_text
+  expected_output_type: text
+  timeout: 300
+  requires_root: false
+  safe_mode_allowed: false
+  notes: "Windows only, requires administrative privileges"
+
+responder:
+  category: postex
+  description: "LLMNR, NBT-NS and MDNS poisoner"
+  exec_command: "responder -I {interface} -A"
+  output_parser: parse_responder_text
+  expected_output_type: text
+  timeout: 3600
+  requires_root: true
+  safe_mode_allowed: false
+
+powersploit:
+  category: postex
+  description: "PowerShell post-exploitation framework"
+  tools:
+    invoke_mimikatz: "powershell -c 'Import-Module PowerSploit; Invoke-Mimikatz'"
+    get_system: "powershell -c 'Import-Module PowerSploit; Get-System'"
+    invoke_shellcode: "powershell -c 'Import-Module PowerSploit; Invoke-Shellcode'"
+  output_parser: parse_powersploit_text
+  expected_output_type: text
+  timeout: 600
+  requires_root: false
+  safe_mode_allowed: false
+  notes: "Windows PowerShell required"

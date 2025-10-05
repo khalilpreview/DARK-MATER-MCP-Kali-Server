@@ -1,0 +1,135 @@
+# Utility Tools Registry
+# Support tools, reporting, and infrastructure utilities
+
+burpsuite:
+  category: utility
+  description: "Web application security testing platform"
+  api_endpoint: "http://localhost:1337"
+  api_auth: "api_key"
+  output_parser: parse_burp_json
+  expected_output_type: json
+  timeout: 3600
+  requires_root: false
+  safe_mode_allowed: true
+  notes: "Professional version required for API access"
+
+owasp-zap:
+  category: utility
+  description: "Web application security scanner"
+  exec_command: "zap-baseline.py -t {target}"
+  api_endpoint: "http://localhost:8080"
+  advanced_commands:
+    full_scan: "zap-full-scan.py -t {target}"
+    api_scan: "zap-api-scan.py -t {target} -f openapi"
+  output_parser: parse_zap_json
+  expected_output_type: json
+  timeout: 3600
+  requires_root: false
+  safe_mode_allowed: true
+
+openvas:
+  category: utility
+  description: "Vulnerability scanner and manager"
+  api_endpoint: "https://localhost:9392"
+  api_auth: "omp_credentials"
+  output_parser: parse_openvas_xml
+  expected_output_type: xml
+  timeout: 7200
+  requires_root: false
+  safe_mode_allowed: true
+  notes: "Requires OpenVAS server installation"
+
+nessus:
+  category: utility
+  description: "Professional vulnerability scanner"
+  api_endpoint: "https://localhost:8834"
+  api_auth: "api_keys"
+  output_parser: parse_nessus_json
+  expected_output_type: json
+  timeout: 7200
+  requires_root: false
+  safe_mode_allowed: true
+  notes: "Commercial license required"
+
+wpscan:
+  category: utility
+  description: "WordPress vulnerability scanner"
+  exec_command: "wpscan --url {target} --enumerate u,t,p --format json"
+  advanced_commands:
+    aggressive: "wpscan --url {target} --enumerate u,t,p,tt,cb,dbe --format json"
+    api_token: "wpscan --url {target} --api-token {token} --format json"
+  output_parser: parse_wpscan_json
+  expected_output_type: json
+  timeout: 900
+  requires_root: false
+  safe_mode_allowed: true
+
+dirsearch:
+  category: utility
+  description: "Web path discovery tool"
+  exec_command: "dirsearch -u {target} -e php,html,js,txt --format=json"
+  advanced_commands:
+    recursive: "dirsearch -u {target} -e php,html,js,txt --recursive --format=json"
+    custom_wordlist: "dirsearch -u {target} -w {wordlist} --format=json"
+  output_parser: parse_dirsearch_json
+  expected_output_type: json
+  timeout: 1800
+  requires_root: false
+  safe_mode_allowed: true
+
+ffuf:
+  category: utility
+  description: "Fast web fuzzer written in Go"
+  exec_command: "ffuf -w {wordlist} -u {target}/FUZZ -o {output_file} -of json"
+  advanced_commands:
+    vhost: "ffuf -w {wordlist} -u {target} -H 'Host: FUZZ.{domain}' -of json"
+    parameters: "ffuf -w {wordlist} -u {target}?FUZZ=test -of json"
+  output_parser: parse_ffuf_json
+  expected_output_type: json
+  timeout: 1800
+  requires_root: false
+  safe_mode_allowed: true
+
+aquatone:
+  category: utility
+  description: "Visual inspection tool for websites"
+  exec_command: "aquatone -ports {ports} -out {output_dir}"
+  output_parser: parse_aquatone_json
+  expected_output_type: json
+  timeout: 1800
+  requires_root: false
+  safe_mode_allowed: true
+  notes: "Requires Chrome/Chromium for screenshots"
+
+eyewitness:
+  category: utility
+  description: "Website screenshot and report generation"
+  exec_command: "eyewitness --web --timeout 30 -f {targets_file} -d {output_dir}"
+  output_parser: parse_eyewitness_json
+  expected_output_type: json
+  timeout: 3600
+  requires_root: false
+  safe_mode_allowed: true
+
+nuclei:
+  category: utility
+  description: "Vulnerability scanner based on simple YAML templates"
+  exec_command: "nuclei -u {target} -json -o {output_file}"
+  advanced_commands:
+    severity: "nuclei -u {target} -severity critical,high -json -o {output_file}"
+    template: "nuclei -u {target} -t {template_path} -json -o {output_file}"
+  output_parser: parse_nuclei_json
+  expected_output_type: json
+  timeout: 1800
+  requires_root: false
+  safe_mode_allowed: true
+
+subfinder:
+  category: utility
+  description: "Subdomain discovery tool"
+  exec_command: "subfinder -d {target} -json -o {output_file}"
+  output_parser: parse_subfinder_json
+  expected_output_type: json
+  timeout: 600
+  requires_root: false
+  safe_mode_allowed: true

@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "metasploit.auxiliary",
+  "description": "Metasploit auxiliary module execution for scanning and enumeration",
+  "type": "object",
+  "properties": {
+    "module": {
+      "type": "string",
+      "pattern": "^auxiliary/[a-zA-Z0-9/_-]+$",
+      "description": "Metasploit auxiliary module path (e.g., 'auxiliary/scanner/smb/smb_version')",
+      "minLength": 10,
+      "maxLength": 100
+    },
+    "target": {
+      "type": "string", 
+      "pattern": "^[0-9A-Za-z.:/_-]+$",
+      "description": "Target host, IP address, or CIDR range",
+      "minLength": 1,
+      "maxLength": 253
+    },
+    "rhosts": {
+      "type": "string",
+      "description": "Remote hosts (alias for target for compatibility)",
+      "pattern": "^[0-9A-Za-z.:/_,-\\s]+$",
+      "maxLength": 1000
+    },
+    "rport": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "Remote port on target system"
+    },
+    "threads": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 50,
+      "default": 10,
+      "description": "Number of concurrent threads"
+    },
+    "options": {
+      "type": "object",
+      "description": "Additional module options",
+      "additionalProperties": {
+        "type": "string",
+        "maxLength": 500
+      },
+      "maxProperties": 15
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 30,
+      "maximum": 900,
+      "default": 300,
+      "description": "Execution timeout in seconds"
+    },
+    "verbose": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable verbose output"
+    }
+  },
+  "required": ["module", "target"],
+  "additionalProperties": false
+}

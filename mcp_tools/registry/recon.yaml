@@ -1,0 +1,133 @@
+# Reconnaissance Tools Registry
+# Network scanning, enumeration, and discovery tools
+
+nmap:
+  category: recon
+  description: "Network mapper for host discovery and port scanning"
+  exec_command: "nmap -sV -Pn {target}"
+  advanced_commands:
+    tcp_scan: "nmap -sS -O -sV -p- {target}"
+    udp_scan: "nmap -sU --top-ports 1000 {target}"  
+    script_scan: "nmap --script vuln {target}"
+  output_parser: parse_nmap_xml
+  expected_output_type: xml
+  timeout: 300
+  requires_root: false
+  safe_mode_allowed: true
+
+masscan:
+  category: recon
+  description: "High-speed network port scanner"
+  exec_command: "masscan -p 1-65535 --rate=1000 {target}"
+  output_parser: parse_masscan_json
+  expected_output_type: json
+  timeout: 600
+  requires_root: true
+  safe_mode_allowed: true
+
+nikto:
+  category: recon
+  description: "Web vulnerability scanner"
+  exec_command: "nikto -h {target} -Format json"
+  output_parser: parse_nikto_json
+  expected_output_type: json
+  timeout: 900
+  requires_root: false
+  safe_mode_allowed: true
+
+dirb:
+  category: recon
+  description: "Web directory brute forcer"
+  exec_command: "dirb http://{target}/ /usr/share/dirb/wordlists/common.txt"
+  advanced_commands:
+    big_wordlist: "dirb http://{target}/ /usr/share/dirb/wordlists/big.txt"
+    extensions: "dirb http://{target}/ -X .php,.html,.txt,.js"
+  output_parser: parse_dirb_text
+  expected_output_type: text
+  timeout: 1800
+  requires_root: false
+  safe_mode_allowed: true
+
+gobuster:
+  category: recon
+  description: "Fast directory and file brute forcer"
+  exec_command: "gobuster dir -u http://{target} -w /usr/share/wordlists/dirb/common.txt -o {output_file}"
+  advanced_commands:
+    vhost: "gobuster vhost -u http://{target} -w /usr/share/wordlists/subdomains.txt"
+    dns: "gobuster dns -d {target} -w /usr/share/wordlists/subdomains.txt"
+  output_parser: parse_gobuster_text
+  expected_output_type: text
+  timeout: 1200
+  requires_root: false
+  safe_mode_allowed: true
+
+theharvester:
+  category: recon
+  description: "Email, subdomain and people names harvester"
+  exec_command: "theHarvester -d {target} -l 500 -b all"
+  advanced_commands:
+    google_only: "theHarvester -d {target} -l 100 -b google"
+    shodan: "theHarvester -d {target} -l 100 -b shodan"
+  output_parser: parse_harvester_text
+  expected_output_type: text
+  timeout: 300
+  requires_root: false
+  safe_mode_allowed: true
+
+recon-ng:
+  category: recon
+  description: "Full-featured reconnaissance framework"
+  exec_command: "recon-ng -r {script_file}"
+  output_parser: parse_reconng_text
+  expected_output_type: text
+  timeout: 600
+  requires_root: false
+  safe_mode_allowed: true
+  notes: "Requires custom script file generation"
+
+amass:
+  category: recon
+  description: "Attack surface mapping and asset discovery"
+  exec_command: "amass enum -d {target} -o {output_file}"
+  advanced_commands:
+    passive: "amass enum -passive -d {target}"
+    brute: "amass enum -brute -d {target}"
+  output_parser: parse_amass_text
+  expected_output_type: text
+  timeout: 1800
+  requires_root: false
+  safe_mode_allowed: true
+
+spiderfoot:
+  category: recon
+  description: "OSINT automation framework"
+  exec_command: "sf_cli.py -s {target} -t IP_ADDRESS,INTERNET_NAME"
+  output_parser: parse_spiderfoot_json
+  expected_output_type: json
+  timeout: 3600
+  requires_root: false
+  safe_mode_allowed: true
+  api_endpoint: "http://localhost:5001"
+
+dnsrecon:
+  category: recon
+  description: "DNS enumeration and reconnaissance"
+  exec_command: "dnsrecon -d {target} -j {output_file}"
+  advanced_commands:
+    zone_transfer: "dnsrecon -d {target} -a"
+    brute_force: "dnsrecon -d {target} -D /usr/share/wordlists/dnsmap.txt -t brt"
+  output_parser: parse_dnsrecon_json
+  expected_output_type: json
+  timeout: 300
+  requires_root: false
+  safe_mode_allowed: true
+
+fierce:
+  category: recon
+  description: "DNS scanner for locating non-contiguous IP space"
+  exec_command: "fierce --domain {target} --subdomains /usr/share/fierce/hosts.txt"
+  output_parser: parse_fierce_text
+  expected_output_type: text
+  timeout: 600
+  requires_root: false
+  safe_mode_allowed: true

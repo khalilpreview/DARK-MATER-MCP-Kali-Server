@@ -1,0 +1,38 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "web.nikto",
+  "description": "Web vulnerability scanner using Nikto",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "pattern": "^https?://[a-zA-Z0-9.-]+(?::[0-9]+)?(?:/.*)?$",
+      "description": "Target URL to scan (must be HTTP/HTTPS)"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "description": "Specific port to scan (optional)"
+    },
+    "ssl": {
+      "type": "boolean",
+      "default": false,
+      "description": "Force SSL/TLS scanning"
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 300,
+      "default": 120,
+      "description": "Scan timeout in seconds"
+    },
+    "tuning": {
+      "type": "string",
+      "pattern": "^[0-9,x]*$",
+      "description": "Nikto tuning options (e.g., '1,2,3' or 'x6')"
+    }
+  },
+  "required": ["target"],
+  "additionalProperties": false
+}

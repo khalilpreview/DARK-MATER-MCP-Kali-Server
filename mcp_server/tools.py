@@ -82,6 +82,26 @@ class ToolRegistry:
         """
         return self.tools.get(name)
     
+    def register_tool(self, name: str, description: str, category: str, schema_file: str, executor):
+        """
+        Register a new tool with the registry.
+        
+        Args:
+            name: Tool name (e.g., "web.nikto")
+            description: Tool description
+            category: Tool category for organization
+            schema_file: Schema filename (e.g., "web_nikto.json")
+            executor: Callable that executes the tool
+        """
+        self.tools[name] = {
+            "name": name,
+            "description": description,
+            "category": category,
+            "schema": f"/schemas/tools/{schema_file}",
+            "executor": executor
+        }
+        logger.debug(f"Registered tool: {name} ({category})")
+    
     def _execute_nmap_basic(self, server_id: str, args: Dict[str, Any]) -> ToolResult:
         """
         Execute basic nmap scan safely.
@@ -352,3 +372,935 @@ def call_tool(server_id: str, name: str, args: Dict[str, Any]) -> Dict[str, Any]
             "summary": f"Tool execution failed: {str(e)}",
             "error": "EXECUTION_FAILED"
         }
+
+# Extended Tool Implementations for Phase 2
+
+class WebSecurityTools:
+    """Web application security testing tools."""
+    
+    @staticmethod
+    def execute_nikto_scan(server_id: str, args: Dict[str, Any]) -> ToolResult:
+        """Execute Nikto web vulnerability scanner."""
+        try:
+            target = args["target"]
+            port = args.get("port")
+            ssl = args.get("ssl", False)
+            timeout = args.get("timeout", 120)
+            tuning = args.get("tuning")
+            
+            # Build nikto command
+            cmd = ["nikto", "-h", target, "-Format", "xml", "-output", "-"]
+            
+            if port:
+                cmd.extend(["-p", str(port)])
+            
+            if ssl:
+                cmd.append("-ssl")
+            
+            if tuning:
+                cmd.extend(["-T", tuning])
+            
+            # Add timeout
+            cmd.extend(["-timeout", str(timeout)])
+            
+            # Execute command
+            start_time = time.time()
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout + 30,  # Add buffer for timeout
+                check=False
+            )
+            duration = time.time() - start_time
+            
+            # Parse results
+            findings = WebSecurityTools._parse_nikto_output(result.stdout)
+            
+            # Generate summary
+            if result.returncode == 0:
+                summary = f"Nikto scan completed. Found {len(findings)} potential issues on {target}"
+                if port:
+                    summary += f" (port {port})"
+            else:
+                summary = f"Nikto scan failed for {target}: {result.stderr.strip()}"
+                findings = []
+            
+            # Store artifact
+            artifact_uri = None
+            if result.stdout:
+                from .artifacts import artifact_manager
+                artifact_uri = artifact_manager.save_artifact(
+                    server_id=server_id,
+                    run_id=f"nikto_{int(time.time())}",
+                    kind="nikto_scan",
+                    content=result.stdout
+                )
+            
+            return ToolResult(
+                rc=result.returncode,
+                summary=summary,
+                artifact_uri=artifact_uri,
+                findings=findings,
+                duration=duration
+            )
+            
+        except subprocess.TimeoutExpired:
+            return ToolResult(
+                rc=-1,
+                summary=f"Nikto scan timed out after {timeout} seconds",
+                duration=timeout
+            )
+        except Exception as e:
+            logger.error(f"Nikto execution error: {e}")
+            return ToolResult(
+                rc=-1,
+                summary=f"Nikto scan failed: {str(e)}",
+                duration=0
+            )
+    
+    @staticmethod
+    def _parse_nikto_output(xml_output: str) -> List[Dict[str, Any]]:
+        """Parse Nikto XML output."""
+        findings = []
+        try:
+            if not xml_output or "<niktoscan" not in xml_output:
+                return findings
+            
+            root = ET.fromstring(xml_output)
+            
+            for scan in root.findall(".//scandetails"):
+                for item in scan.findall(".//item"):
+                    finding = {
+                        "id": item.get("id", ""),
+                        "osvdb": item.get("osvdb", ""),
+                        "method": item.get("method", "GET"),
+                        "uri": item.get("uri", ""),
+                        "description": item.text.strip() if item.text else "",
+                        "severity": "medium"  # Nikto doesn't provide severity
+                    }
+                    findings.append(finding)
+                    
+        except ET.ParseError as e:
+            logger.error(f"Error parsing Nikto XML: {e}")
+        except Exception as e:
+            logger.error(f"Error processing Nikto output: {e}")
+        
+        return findings
+    
+    @staticmethod
+    def execute_dirb_scan(server_id: str, args: Dict[str, Any]) -> ToolResult:
+        """Execute DIRB directory brute forcer."""
+        try:
+            target = args["target"]
+            wordlist = args.get("wordlist", "common")
+            extensions = args.get("extensions")
+            recursive = args.get("recursive", True)
+            silent = args.get("silent", True)
+            timeout = args.get("timeout", 300)
+            
+            # Build dirb command
+            cmd = ["dirb", target]
+            
+            # Select wordlist
+            wordlist_map = {
+                "common": "/usr/share/dirb/wordlists/common.txt",
+                "big": "/usr/share/dirb/wordlists/big.txt", 
+                "small": "/usr/share/dirb/wordlists/small.txt"
+            }
+            
+            if wordlist in wordlist_map:
+                cmd.append(wordlist_map[wordlist])
+            
+            # Add options
+            if extensions:
+                cmd.extend(["-X", f".{extensions.replace(',', ',.')}"])
+            
+            if not recursive:
+                cmd.append("-w")
+            
+            if silent:
+                cmd.append("-S")
+            
+            # Execute command
+            start_time = time.time()
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout + 30,
+                check=False
+            )
+            duration = time.time() - start_time
+            
+            # Parse results
+            findings = WebSecurityTools._parse_dirb_output(result.stdout)
+            
+            # Generate summary
+            if result.returncode == 0:
+                summary = f"DIRB scan completed. Found {len(findings)} directories/files on {target}"
+            else:
+                summary = f"DIRB scan failed for {target}: {result.stderr.strip()}"
+                findings = []
+            
+            # Store artifact
+            artifact_uri = None
+            if result.stdout:
+                from .artifacts import artifact_manager
+                artifact_uri = artifact_manager.save_artifact(
+                    server_id=server_id,
+                    run_id=f"dirb_{int(time.time())}",
+                    kind="dirb_scan",
+                    content=result.stdout
+                )
+            
+            return ToolResult(
+                rc=result.returncode,
+                summary=summary,
+                artifact_uri=artifact_uri,
+                findings=findings,
+                duration=duration
+            )
+            
+        except subprocess.TimeoutExpired:
+            return ToolResult(
+                rc=-1,
+                summary=f"DIRB scan timed out after {timeout} seconds",
+                duration=timeout
+            )
+        except Exception as e:
+            logger.error(f"DIRB execution error: {e}")
+            return ToolResult(
+                rc=-1,
+                summary=f"DIRB scan failed: {str(e)}",
+                duration=0
+            )
+    
+    @staticmethod
+    def _parse_dirb_output(output: str) -> List[Dict[str, Any]]:
+        """Parse DIRB text output."""
+        findings = []
+        try:
+            lines = output.split('\n')
+            for line in lines:
+                line = line.strip()
+                # Look for found directories/files
+                if '==> DIRECTORY:' in line or '+ ' in line:
+                    if '==> DIRECTORY:' in line:
+                        path = line.split('DIRECTORY:')[1].strip()
+                        finding_type = "directory"
+                    else:
+                        # Parse "+ URL (CODE:SIZE)"
+                        parts = line.split('(')
+                        if len(parts) >= 2:
+                            path = parts[0].replace('+', '').strip()
+                            status_info = parts[1].replace(')', '')
+                            finding_type = "file"
+                        else:
+                            continue
+                    
+                    finding = {
+                        "path": path,
+                        "type": finding_type,
+                        "status": "found",
+                        "method": "GET"
+                    }
+                    
+                    if 'CODE:' in line:
+                        # Extract status code
+                        import re
+                        code_match = re.search(r'CODE:(\d+)', line)
+                        if code_match:
+                            finding["status_code"] = int(code_match.group(1))
+                    
+                    findings.append(finding)
+                    
+        except Exception as e:
+            logger.error(f"Error parsing DIRB output: {e}")
+        
+        return findings
+
+class SSLSecurityTools:
+    """SSL/TLS security analysis tools."""
+    
+    @staticmethod
+    def execute_sslyze_scan(server_id: str, args: Dict[str, Any]) -> ToolResult:
+        """Execute SSLyze SSL/TLS analyzer."""
+        try:
+            target = args["target"]
+            port = args.get("port", 443)
+            sni = args.get("sni")
+            timeout = args.get("timeout", 30)
+            check_vulnerabilities = args.get("check_vulnerabilities", True)
+            check_cipher_suites = args.get("check_cipher_suites", True)
+            check_certificate = args.get("check_certificate", True)
+            
+            # Build sslyze command
+            target_spec = f"{target}:{port}"
+            cmd = ["sslyze", "--json_out=-", target_spec]
+            
+            if sni:
+                cmd.extend(["--sni", sni])
+            
+            # Add scan options
+            if check_vulnerabilities:
+                cmd.extend(["--heartbleed", "--ccs_injection", "--robot"])
+            
+            if check_cipher_suites:
+                cmd.extend(["--tlsv1_2", "--tlsv1_3"])
+            
+            if check_certificate:
+                cmd.append("--certinfo")
+            
+            # Execute command
+            start_time = time.time()
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout + 30,
+                check=False
+            )
+            duration = time.time() - start_time
+            
+            # Parse results
+            findings = SSLSecurityTools._parse_sslyze_output(result.stdout)
+            
+            # Generate summary
+            if result.returncode == 0:
+                vuln_count = len([f for f in findings if f.get("severity") in ["high", "critical"]])
+                summary = f"SSLyze scan completed for {target}:{port}. Found {vuln_count} high/critical issues"
+            else:
+                summary = f"SSLyze scan failed for {target}:{port}: {result.stderr.strip()}"
+                findings = []
+            
+            # Store artifact
+            artifact_uri = None
+            if result.stdout:
+                from .artifacts import artifact_manager
+                artifact_uri = artifact_manager.save_artifact(
+                    server_id=server_id,
+                    run_id=f"sslyze_{int(time.time())}",
+                    kind="sslyze_scan",
+                    content=result.stdout
+                )
+            
+            return ToolResult(
+                rc=result.returncode,
+                summary=summary,
+                artifact_uri=artifact_uri,
+                findings=findings,
+                duration=duration
+            )
+            
+        except subprocess.TimeoutExpired:
+            return ToolResult(
+                rc=-1,
+                summary=f"SSLyze scan timed out after {timeout} seconds",
+                duration=timeout
+            )
+        except Exception as e:
+            logger.error(f"SSLyze execution error: {e}")
+            return ToolResult(
+                rc=-1,
+                summary=f"SSLyze scan failed: {str(e)}",
+                duration=0
+            )
+    
+    @staticmethod
+    def _parse_sslyze_output(json_output: str) -> List[Dict[str, Any]]:
+        """Parse SSLyze JSON output."""
+        findings = []
+        try:
+            if not json_output:
+                return findings
+            
+            import json
+            data = json.loads(json_output)
+            
+            for server_scan in data.get("server_scan_results", []):
+                server_info = server_scan.get("server_info", {})
+                hostname = server_info.get("hostname", "unknown")
+                
+                # Check vulnerabilities
+                scan_commands = server_scan.get("scan_commands_results", {})
+                
+                # Heartbleed
+                heartbleed = scan_commands.get("heartbleed", {})
+                if heartbleed.get("is_vulnerable_to_heartbleed"):
+                    findings.append({
+                        "vulnerability": "heartbleed",
+                        "severity": "critical",
+                        "description": "Server is vulnerable to Heartbleed (CVE-2014-0160)",
+                        "host": hostname
+                    })
+                
+                # CCS Injection
+                ccs_injection = scan_commands.get("openssl_ccs_injection", {})
+                if ccs_injection.get("is_vulnerable_to_ccs_injection"):
+                    findings.append({
+                        "vulnerability": "ccs_injection",
+                        "severity": "high", 
+                        "description": "Server is vulnerable to CCS Injection (CVE-2014-0224)",
+                        "host": hostname
+                    })
+                
+                # Certificate information
+                cert_info = scan_commands.get("certificate_info", {})
+                if cert_info:
+                    cert_deployments = cert_info.get("certificate_deployments", [])
+                    for deployment in cert_deployments:
+                        received_cert = deployment.get("received_certificate_chain", [])
+                        if received_cert:
+                            cert = received_cert[0]
+                            # Check certificate issues
+                            if cert.get("not_valid_after"):
+                                # Add certificate expiration info
+                                findings.append({
+                                    "type": "certificate_info",
+                                    "severity": "info",
+                                    "description": f"Certificate expires: {cert.get('not_valid_after')}",
+                                    "host": hostname
+                                })
+                
+        except json.JSONDecodeError:
+            logger.error("Failed to parse SSLyze JSON output")
+        except Exception as e:
+            logger.error(f"Error processing SSLyze output: {e}")
+        
+        return findings
+
+class NetworkDiscoveryTools:
+    """Network discovery and analysis tools."""
+    
+    @staticmethod
+    def execute_masscan(server_id: str, args: Dict[str, Any]) -> ToolResult:
+        """Execute Masscan high-speed port scanner."""
+        try:
+            target = args["target"]
+            ports = args.get("ports", "1-1000")
+            rate = args.get("rate", 1000)
+            timeout = args.get("timeout", 300)
+            banners = args.get("banners", False)
+            
+            # Build masscan command
+            cmd = ["masscan", target, "-p", ports, "--rate", str(rate), "-oX", "-"]
+            
+            if banners:
+                cmd.append("--banners")
+            
+            # Execute command
+            start_time = time.time()
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout + 30,
+                check=False
+            )
+            duration = time.time() - start_time
+            
+            # Parse results
+            findings = NetworkDiscoveryTools._parse_masscan_output(result.stdout)
+            
+            # Generate summary
+            if result.returncode == 0:
+                summary = f"Masscan completed for {target}. Found {len(findings)} open ports"
+            else:
+                summary = f"Masscan failed for {target}: {result.stderr.strip()}"
+                findings = []
+            
+            # Store artifact
+            artifact_uri = None
+            if result.stdout:
+                from .artifacts import artifact_manager
+                artifact_uri = artifact_manager.save_artifact(
+                    server_id=server_id,
+                    run_id=f"masscan_{int(time.time())}",
+                    kind="masscan_scan",
+                    content=result.stdout
+                )
+            
+            return ToolResult(
+                rc=result.returncode,
+                summary=summary,
+                artifact_uri=artifact_uri,
+                findings=findings,
+                duration=duration
+            )
+            
+        except subprocess.TimeoutExpired:
+            return ToolResult(
+                rc=-1,
+                summary=f"Masscan timed out after {timeout} seconds",
+                duration=timeout
+            )
+        except Exception as e:
+            logger.error(f"Masscan execution error: {e}")
+            return ToolResult(
+                rc=-1,
+                summary=f"Masscan failed: {str(e)}",
+                duration=0
+            )
+    
+    @staticmethod
+    def _parse_masscan_output(xml_output: str) -> List[Dict[str, Any]]:
+        """Parse Masscan XML output."""
+        findings = []
+        try:
+            if not xml_output or "<nmaprun" not in xml_output:
+                return findings
+            
+            root = ET.fromstring(xml_output)
+            
+            for host in root.findall("host"):
+                # Get host address
+                address_elem = host.find("address")
+                if address_elem is None:
+                    continue
+                    
+                host_ip = address_elem.get("addr")
+                
+                # Get ports
+                for port in host.findall(".//port"):
+                    port_id = port.get("portid")
+                    protocol = port.get("protocol")
+                    
+                    # Get port state
+                    state_elem = port.find("state")
+                    port_state = state_elem.get("state") if state_elem is not None else "unknown"
+                    
+                    if port_state == "open":
+                        finding = {
+                            "host": host_ip,
+                            "port": int(port_id),
+                            "protocol": protocol,
+                            "state": port_state
+                        }
+                        
+                        # Get banner if available
+                        service_elem = port.find("service")
+                        if service_elem is not None:
+                            finding["service"] = service_elem.get("name", "")
+                            finding["banner"] = service_elem.get("banner", "")
+                        
+                        findings.append(finding)
+                        
+        except ET.ParseError as e:
+            logger.error(f"Error parsing Masscan XML: {e}")
+        except Exception as e:
+            logger.error(f"Error processing Masscan output: {e}")
+        
+        return findings
+
+class MetasploitTools:
+    """Metasploit Framework integration for penetration testing."""
+    
+    # Safe modules that are primarily for reconnaissance/enumeration
+    SAFE_MODULES = {
+        "auxiliary/scanner/smb/smb_version",
+        "auxiliary/scanner/ssh/ssh_version",
+        "auxiliary/scanner/http/http_version",
+        "auxiliary/scanner/ftp/ftp_version",
+        "auxiliary/scanner/telnet/telnet_version",
+        "auxiliary/scanner/mysql/mysql_version",
+        "auxiliary/scanner/mssql/mssql_ping",
+        "auxiliary/scanner/oracle/oracle_login",
+        "auxiliary/scanner/postgres/postgres_version",
+        "auxiliary/scanner/vnc/vnc_none_auth",
+        "auxiliary/scanner/rdp/rdp_scanner",
+        "auxiliary/scanner/smb/smb_enumshares",
+        "auxiliary/scanner/smb/smb_enumusers",
+        "auxiliary/scanner/snmp/snmp_enum",
+        "auxiliary/scanner/dns/dns_amp",
+        "auxiliary/scanner/discovery/arp_sweep",
+        "auxiliary/scanner/discovery/udp_sweep",
+        "auxiliary/scanner/netbios/nbname"
+    }
+    
+    # Dangerous modules that require explicit authorization
+    DANGEROUS_MODULES = {
+        "exploit/windows/smb/ms17_010_eternalblue",
+        "exploit/multi/handler",
+        "exploit/windows/dcerpc/ms03_026_dcom",
+        "exploit/linux/samba/is_known_pipename",
+        "exploit/unix/webapp/php_include",
+        "exploit/windows/browser/ms10_002_aurora",
+        "exploit/windows/fileformat/"  # Any file format exploit
+    }
+    
+    @staticmethod
+    def execute_exploit(server_id: str, args: Dict[str, Any]) -> ToolResult:
+        """Execute Metasploit exploit module with safety checks."""
+        try:
+            module = args["module"]
+            target = args["target"]
+            payload = args.get("payload", "generic/shell_reverse_tcp")
+            lhost = args.get("lhost", "127.0.0.1")
+            lport = args.get("lport", 4444)
+            rport = args.get("rport", 445)
+            timeout = args.get("timeout", 180)
+            check_only = args.get("check_only", True)
+            safe_mode = args.get("safe_mode", True)
+            options = args.get("options", {})
+            
+            # Safety checks
+            if safe_mode and not MetasploitTools._is_safe_module(module):
+                return ToolResult(
+                    rc=-1,
+                    summary=f"Module {module} is not in safe module list. Set safe_mode=false to override (dangerous!).",
+                    duration=0
+                )
+            
+            # Build msfconsole resource script
+            resource_commands = [
+                f"use {module}",
+                f"set RHOSTS {target}",
+                f"set RPORT {rport}"
+            ]
+            
+            if not check_only:
+                resource_commands.extend([
+                    f"set PAYLOAD {payload}",
+                    f"set LHOST {lhost}",
+                    f"set LPORT {lport}"
+                ])
+            
+            # Add custom options
+            for key, value in options.items():
+                # Sanitize option key/value
+                safe_key = MetasploitTools._sanitize_option(key)
+                safe_value = MetasploitTools._sanitize_option(value)
+                resource_commands.append(f"set {safe_key} {safe_value}")
+            
+            # Add the action command
+            if check_only:
+                resource_commands.append("check")
+            else:
+                resource_commands.append("exploit -j")  # Run as job
+            
+            resource_commands.append("exit")
+            
+            # Create temporary resource file
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.rc', delete=False) as f:
+                f.write('\n'.join(resource_commands))
+                resource_file = f.name
+            
+            try:
+                # Execute msfconsole with resource file
+                cmd = [
+                    "msfconsole",
+                    "-q",  # Quiet mode
+                    "-r", resource_file,  # Resource file
+                    "-o", "/tmp/msf_output.txt"  # Output file
+                ]
+                
+                start_time = time.time()
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout + 60,
+                    check=False
+                )
+                duration = time.time() - start_time
+                
+                # Parse results
+                findings = MetasploitTools._parse_msf_output(result.stdout, result.stderr)
+                
+                # Generate summary
+                if result.returncode == 0:
+                    if check_only:
+                        summary = f"Vulnerability check completed for {target} using {module}"
+                    else:
+                        summary = f"Exploit execution completed against {target}"
+                    
+                    if findings:
+                        summary += f" - {len(findings)} findings"
+                else:
+                    summary = f"Metasploit execution failed (exit code: {result.returncode})"
+                
+                # Save artifact
+                artifact_uri = None
+                if result.stdout:
+                    artifact_uri = save_artifact(
+                        server_id=server_id,
+                        kind="metasploit_exploit",
+                        content=result.stdout
+                    )
+                
+                return ToolResult(
+                    rc=result.returncode,
+                    summary=summary,
+                    artifact_uri=artifact_uri,
+                    findings=findings,
+                    duration=duration
+                )
+                
+            finally:
+                # Clean up temporary file
+                import os
+                try:
+                    os.unlink(resource_file)
+                except:
+                    pass
+                    
+        except subprocess.TimeoutExpired:
+            return ToolResult(
+                rc=-1,
+                summary=f"Metasploit exploit timed out after {timeout} seconds",
+                duration=timeout
+            )
+        except Exception as e:
+            logger.error(f"Metasploit exploit execution error: {e}")
+            return ToolResult(
+                rc=-1,
+                summary=f"Metasploit exploit failed: {str(e)}",
+                duration=0
+            )
+    
+    @staticmethod
+    def execute_auxiliary(server_id: str, args: Dict[str, Any]) -> ToolResult:
+        """Execute Metasploit auxiliary module."""
+        try:
+            module = args["module"]
+            target = args.get("target")
+            rhosts = args.get("rhosts", target)
+            rport = args.get("rport")
+            threads = args.get("threads", 10)
+            timeout = args.get("timeout", 300)
+            verbose = args.get("verbose", False)
+            options = args.get("options", {})
+            
+            # Build msfconsole resource script
+            resource_commands = [
+                f"use {module}",
+                f"set RHOSTS {rhosts}"
+            ]
+            
+            if rport:
+                resource_commands.append(f"set RPORT {rport}")
+            
+            resource_commands.append(f"set THREADS {threads}")
+            
+            if verbose:
+                resource_commands.append("set VERBOSE true")
+            
+            # Add custom options
+            for key, value in options.items():
+                safe_key = MetasploitTools._sanitize_option(key)
+                safe_value = MetasploitTools._sanitize_option(value)
+                resource_commands.append(f"set {safe_key} {safe_value}")
+            
+            resource_commands.extend(["run", "exit"])
+            
+            # Create temporary resource file
+            import tempfile
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.rc', delete=False) as f:
+                f.write('\n'.join(resource_commands))
+                resource_file = f.name
+            
+            try:
+                # Execute msfconsole
+                cmd = [
+                    "msfconsole",
+                    "-q",
+                    "-r", resource_file
+                ]
+                
+                start_time = time.time()
+                result = subprocess.run(
+                    cmd,
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout + 60,
+                    check=False
+                )
+                duration = time.time() - start_time
+                
+                # Parse results
+                findings = MetasploitTools._parse_msf_output(result.stdout, result.stderr)
+                
+                # Generate summary
+                if result.returncode == 0:
+                    summary = f"Auxiliary scan completed on {rhosts} using {module}"
+                    if findings:
+                        summary += f" - {len(findings)} findings"
+                else:
+                    summary = f"Metasploit auxiliary failed (exit code: {result.returncode})"
+                
+                # Save artifact
+                artifact_uri = None
+                if result.stdout:
+                    artifact_uri = save_artifact(
+                        server_id=server_id,
+                        kind="metasploit_auxiliary",
+                        content=result.stdout
+                    )
+                
+                return ToolResult(
+                    rc=result.returncode,
+                    summary=summary,
+                    artifact_uri=artifact_uri,
+                    findings=findings,
+                    duration=duration
+                )
+                
+            finally:
+                # Clean up
+                import os
+                try:
+                    os.unlink(resource_file)
+                except:
+                    pass
+                    
+        except subprocess.TimeoutExpired:
+            return ToolResult(
+                rc=-1,
+                summary=f"Metasploit auxiliary timed out after {timeout} seconds",
+                duration=timeout
+            )
+        except Exception as e:
+            logger.error(f"Metasploit auxiliary execution error: {e}")
+            return ToolResult(
+                rc=-1,
+                summary=f"Metasploit auxiliary failed: {str(e)}",
+                duration=0
+            )
+    
+    @staticmethod
+    def _is_safe_module(module: str) -> bool:
+        """Check if a module is considered safe for automated execution."""
+        # Check if it's in the explicit safe list
+        if module in MetasploitTools.SAFE_MODULES:
+            return True
+        
+        # Check if it's auxiliary (generally safer)
+        if module.startswith("auxiliary/scanner/"):
+            return True
+        
+        # Check if it's explicitly dangerous
+        for dangerous in MetasploitTools.DANGEROUS_MODULES:
+            if module.startswith(dangerous) or module == dangerous:
+                return False
+        
+        # Conservative default: unknown modules are not safe
+        return False
+    
+    @staticmethod
+    def _sanitize_option(value: str) -> str:
+        """Sanitize Metasploit option values to prevent injection."""
+        # Remove potentially dangerous characters
+        import re
+        sanitized = re.sub(r'[;&|`$(){}[\]<>]', '', str(value))
+        return sanitized[:500]  # Limit length
+    
+    @staticmethod
+    def _parse_msf_output(stdout: str, stderr: str) -> List[Dict[str, Any]]:
+        """Parse Metasploit output to extract findings."""
+        findings = []
+        
+        try:
+            lines = (stdout + "\n" + stderr).split('\n')
+            
+            for line in lines:
+                line = line.strip()
+                
+                # Parse common patterns
+                if '[+]' in line:  # Success/discovery
+                    findings.append({
+                        "type": "success",
+                        "message": line.replace('[+]', '').strip(),
+                        "severity": "info"
+                    })
+                elif '[!]' in line:  # Warning
+                    findings.append({
+                        "type": "warning", 
+                        "message": line.replace('[!]', '').strip(),
+                        "severity": "medium"
+                    })
+                elif '[-]' in line:  # Error/failure
+                    findings.append({
+                        "type": "error",
+                        "message": line.replace('[-]', '').strip(),
+                        "severity": "low"
+                    })
+                elif 'Vulnerable' in line or 'VULNERABLE' in line:
+                    findings.append({
+                        "type": "vulnerability",
+                        "message": line,
+                        "severity": "high"
+                    })
+                elif 'Session' in line and 'created' in line:
+                    findings.append({
+                        "type": "session",
+                        "message": line,
+                        "severity": "critical"
+                    })
+        
+        except Exception as e:
+            logger.error(f"Error parsing Metasploit output: {e}")
+        
+        return findings
+
+# Register new tools with the tool registry
+def register_extended_tools():
+    """Register Phase 2 extended tools."""
+    
+    # Web security tools
+    tool_registry.register_tool(
+        name="web.nikto",
+        description="Web vulnerability scanner using Nikto",
+        category="web_security",
+        schema_file="web_nikto.json",
+        executor=WebSecurityTools.execute_nikto_scan
+    )
+    
+    tool_registry.register_tool(
+        name="web.dirb", 
+        description="Directory and file brute forcer",
+        category="web_security",
+        schema_file="web_dirb.json",
+        executor=WebSecurityTools.execute_dirb_scan
+    )
+    
+    # SSL security tools
+    tool_registry.register_tool(
+        name="ssl.sslyze",
+        description="SSL/TLS configuration analyzer",
+        category="ssl_security",
+        schema_file="ssl_sslyze.json", 
+        executor=SSLSecurityTools.execute_sslyze_scan
+    )
+    
+    # Network discovery tools
+    tool_registry.register_tool(
+        name="net.masscan",
+        description="High-speed network port scanner",
+        category="network_discovery",
+        schema_file="net_masscan.json",
+        executor=NetworkDiscoveryTools.execute_masscan
+    )
+    
+    # Metasploit tools
+    tool_registry.register_tool(
+        name="metasploit.exploit",
+        description="Metasploit exploit module execution with safety controls",
+        category="exploitation",
+        schema_file="metasploit_exploit.json",
+        executor=MetasploitTools.execute_exploit
+    )
+    
+    tool_registry.register_tool(
+        name="metasploit.auxiliary",
+        description="Metasploit auxiliary modules for scanning and enumeration",
+        category="exploitation",
+        schema_file="metasploit_auxiliary.json",
+        executor=MetasploitTools.execute_auxiliary
+    )
+    
+    logger.info("Extended tools (including Metasploit) registered successfully")
+
+# Register extended tools when module is imported
+register_extended_tools()

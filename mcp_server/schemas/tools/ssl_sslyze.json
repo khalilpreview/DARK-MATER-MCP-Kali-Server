@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ssl.sslyze",
+  "description": "SSL/TLS configuration analyzer",
+  "type": "object",
+  "properties": {
+    "target": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9.-]+$",
+      "description": "Target hostname or IP address"
+    },
+    "port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535,
+      "default": 443,
+      "description": "Target port (default: 443)"
+    },
+    "sni": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9.-]*$",
+      "description": "SNI hostname (if different from target)"
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 5,
+      "maximum": 120,
+      "default": 30,
+      "description": "Connection timeout in seconds"
+    },
+    "check_vulnerabilities": {
+      "type": "boolean",
+      "default": true,
+      "description": "Check for known SSL/TLS vulnerabilities"
+    },
+    "check_cipher_suites": {
+      "type": "boolean",
+      "default": true,
+      "description": "Enumerate supported cipher suites"
+    },
+    "check_certificate": {
+      "type": "boolean",
+      "default": true,
+      "description": "Analyze certificate information"
+    }
+  },
+  "required": ["target"],
+  "additionalProperties": false
+}
