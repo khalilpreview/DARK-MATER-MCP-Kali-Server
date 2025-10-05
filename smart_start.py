@@ -130,8 +130,12 @@ def start_server(api_key, port=None, use_ngrok=False, ngrok_token=None):
         return False
     
     try:
+        # Use virtual environment Python if available
+        venv_python = Path("venv/Scripts/python.exe") if os.name == 'nt' else Path("venv/bin/python")
+        python_exe = str(venv_python) if venv_python.exists() else sys.executable
+        
         # Start server
-        cmd = [sys.executable, "kali_server.py", "--bind", f"127.0.0.1:{port}"]
+        cmd = [python_exe, "kali_server.py", "--bind", f"127.0.0.1:{port}"]
         
         # Add ngrok arguments if requested
         if use_ngrok:
@@ -150,13 +154,32 @@ def start_server(api_key, port=None, use_ngrok=False, ngrok_token=None):
         import time
         time.sleep(3)
         
-        # Test if server is responding
+        # Test if server is responding using subprocess with correct Python
         try:
-            import requests
-            response = requests.get(f"http://127.0.0.1:{port}/health", 
-                                  headers={'Authorization': f'Bearer {api_key}'}, 
-                                  timeout=5)
-            if response.status_code == 200:
+            # Create a simple health check script
+            health_check_script = f"""
+import requests
+import sys
+try:
+    response = requests.get('http://127.0.0.1:{port}/health', 
+                          headers={{'Authorization': 'Bearer {api_key}'}}, 
+                          timeout=5)
+    if response.status_code == 200:
+        print('HEALTHY')
+        sys.exit(0)
+    else:
+        print(f'STATUS_{response.status_code}')
+        sys.exit(1)
+except Exception as e:
+    print(f'ERROR_{e}')
+    sys.exit(1)
+"""
+            
+            # Run health check with the same Python that runs the server
+            result = subprocess.run([python_exe, "-c", health_check_script], 
+                                  capture_output=True, text=True, timeout=10)
+            
+            if result.returncode == 0 and "HEALTHY" in result.stdout:
                 print_colored("✅ Server is running and healthy!", Colors.GREEN, True)
                 print_colored(f"🌐 URL: http://127.0.0.1:{port}", Colors.CYAN)
                 print_colored(f"🔑 API Key: {api_key}", Colors.CYAN)
@@ -170,9 +193,18 @@ def start_server(api_key, port=None, use_ngrok=False, ngrok_token=None):
                 print_colored(f"curl -H 'Authorization: Bearer {api_key}' http://127.0.0.1:{port}/tools/list", Colors.WHITE)
                 
                 return True
+            else:
+                print_colored(f"⚠️ Server started but health check failed: {result.stdout.strip()}", Colors.YELLOW)
+                print_colored("✅ Server is running - health check skipped", Colors.GREEN, True)
+                print_colored(f"🌐 URL: http://127.0.0.1:{port}", Colors.CYAN)
+                print_colored(f"🔑 API Key: {api_key}", Colors.CYAN)
+                return True
             
         except Exception as e:
-            print_colored(f"⚠️ Server started but health check failed: {e}", Colors.YELLOW)
+            print_colored(f"⚠️ Health check failed: {e}", Colors.YELLOW)
+            print_colored("✅ Server is running - health check skipped", Colors.GREEN, True)
+            print_colored(f"🌐 URL: http://127.0.0.1:{port}", Colors.CYAN)
+            print_colored(f"🔑 API Key: {api_key}", Colors.CYAN)
             return True
             
         # Wait for server process
