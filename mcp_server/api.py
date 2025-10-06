@@ -1045,7 +1045,7 @@ async def detailed_health_endpoint(server_creds: ServerCredentials = Depends(req
             }
         }
         
-        except Exception as e:
+    except Exception as e:
             logger.error(f"Detailed health endpoint error: {e}")
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
