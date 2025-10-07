@@ -343,9 +343,38 @@ sudo dark-mater_kali-mcp start-server
 # 4. Interactive management menu
 ```
 
+### 🧪 **First Launch & Testing**
+
+The server includes an automatic first-launch setup that ensures project integrity:
+
+```bash
+# First launch automatically runs comprehensive tests
+python kali_server.py --bind 0.0.0.0:5000
+
+# Manual test suite execution (anytime)
+python tests/run_tests.py
+
+# Test specific components
+python tests/unit/test_server.py          # Unit tests
+python tests/integration/test_server_live.py  # Integration tests  
+python tests/acceptance/test_complete_live_enhanced.py  # End-to-end tests
+```
+
+**What happens on first launch:**
+1. ✅ **Environment Validation** - Checks Python version, dependencies, project structure
+2. ✅ **Comprehensive Testing** - Runs all unit, integration, and acceptance tests
+3. ✅ **Project Integrity** - Validates all components are working correctly
+4. ✅ **Setup Completion** - Marks setup as complete for future launches
+
+**Test Categories:**
+- **Unit Tests** - Individual component testing (schema validation, core logic)
+- **Integration Tests** - API endpoints and tool integration testing
+- **Acceptance Tests** - End-to-end user workflow testing
+- **System Tests** - LLM integration and system-level testing
+
 ### Starting the Server
 
-After installation, you have multiple ways to start the server:
+After successful first launch and testing, you have multiple ways to start the server:
 
 #### **🎯 Recommended: CLI Tool** (Easy & Interactive)
 ```bash
@@ -384,6 +413,38 @@ nohup /opt/mcp-kali-server/venv/bin/python /opt/mcp-kali-server/kali_server.py -
 # Check logs
 tail -f /var/log/mcp-kali-server.log
 ```
+
+### 🔧 **Enhanced CLI Features**
+
+The server includes a comprehensive CLI with enhanced authentication information:
+
+```bash
+# Display comprehensive authentication info
+python kali_server.py --show-auth
+
+# Show full server configuration
+python kali_server.py --show-config
+
+# Test connection to running server
+python kali_server.py --test-connection
+
+# Generate client configurations
+python kali_server.py --generate-client-config curl        # Ready-to-use curl commands
+python kali_server.py --generate-client-config python      # Python client code
+python kali_server.py --generate-client-config powershell  # PowerShell commands
+python kali_server.py --generate-client-config json        # JSON configuration
+
+# Enhanced help with examples
+python kali_server.py --help
+```
+
+**CLI Features:**
+- 🔐 **Complete Authentication Display** - API keys, server IDs, endpoints
+- 💻 **Ready-to-Use Commands** - Generated curl, Python, and PowerShell examples
+- 🔍 **Connection Testing** - Validate server health and connectivity
+- ⚙️ **Configuration Management** - View and validate all settings
+- 📚 **Self-Documenting** - All endpoints and usage examples included
+- 🎯 **Multi-Platform Support** - Works on Windows, Linux, and macOS
 
 ### Alternative: Manual Installation
 
@@ -686,37 +747,73 @@ Metasploit auxiliary modules for scanning, enumeration, and reconnaissance.
 - `auxiliary/scanner/discovery/arp_sweep` - ARP-based host discovery
 - `auxiliary/scanner/portscan/tcp` - TCP port scanning
 
-## File Structure
+## Project Structure
 
 ```
-/opt/mcp-kali-server/          # Installation directory
-├── kali_server.py             # Main server entrypoint
-├── mcp_server/                # Server package
-│   ├── api.py                 # FastAPI application
-│   ├── auth.py                # Authentication & enrollment
+mcp-kali-server/               # Project root
+├── kali_server.py             # 🚀 Main server entrypoint with enhanced CLI
+├── setup_first_launch.py     # 🧪 First launch setup and test runner
+├── mcp_server/                # 📦 Core server package
+│   ├── api.py                 # FastAPI application with all endpoints
+│   ├── auth.py                # Authentication & enrollment system
 │   ├── artifacts.py           # Artifact storage & parsing
-│   ├── memory.py              # Observation recording
-│   ├── scope.py               # Guardrails & validation
-│   ├── tools.py               # Tool execution
+│   ├── memory.py              # Memory and observation recording
+│   ├── scope.py               # Security guardrails & validation
+│   ├── tools.py               # Tool execution engine
 │   ├── util.py                # Utilities & schema validation
-│   └── schemas/               # Tool schemas
+│   └── schemas/               # JSON schemas for tool validation
 │       └── tools/
-│           ├── net_scan_basic.json
-│           ├── web_nikto.json
-│           ├── web_dirb.json
-│           ├── ssl_sslyze.json
-│           ├── net_masscan.json
-│           ├── metasploit_exploit.json
-│           └── metasploit_auxiliary.json
+│           ├── net_scan_basic.json      # Network scanning
+│           ├── web_nikto.json           # Web vulnerability scanning
+│           ├── web_dirb.json            # Directory bruteforcing
+│           ├── ssl_sslyze.json          # SSL/TLS analysis
+│           ├── net_masscan.json         # High-speed port scanning
+│           ├── metasploit_exploit.json  # Exploit modules
+│           └── metasploit_auxiliary.json # Auxiliary modules
+├── mcp_tools/                 # 🔧 Extended tool implementations
+│   ├── manager.py             # Tool registry and management
+│   ├── ai_analyzer.py         # AI-powered result analysis
+│   └── [additional tools]     # Extended security tools
+├── tests/                     # 🧪 Comprehensive test suite
+│   ├── run_tests.py           # Main test runner (run this first!)
+│   ├── README.md              # Test documentation
+│   ├── unit/                  # Unit tests for components
+│   │   ├── test_server.py     # Core server functionality
+│   │   ├── test_schema.py     # Schema validation testing
+│   │   └── test_schema_validation.py # Validation system tests
+│   ├── integration/           # API and integration tests
+│   │   ├── test_server_live.py        # Live server testing
+│   │   ├── test_production_api.py     # Production API testing
+│   │   ├── test_llm_config.py         # LLM integration testing
+│   │   └── [additional integration tests]
+│   ├── acceptance/            # End-to-end acceptance tests
+│   │   └── test_complete_live_enhanced.py # Full system testing
+│   └── system/                # System-level tests
+│       ├── test_llm_integration.py    # LLM system integration
+│       └── test_llm_system.py         # LLM system functionality
+├── demos/                     # 📋 Demo scripts and examples
+│   ├── README.md              # Demo documentation
+│   ├── demo_credentials.py    # Authentication information display
+│   ├── demo_monitored_server.py # Server with comprehensive monitoring
+│   ├── demo_simple_server.py  # Windows-compatible server
+│   ├── demo_logs.py           # Logging demonstration
+│   └── demo_llm_config.py     # LLM configuration examples
 ├── requirements.txt           # Python dependencies
-└── install.sh                # Installation script
+├── install.sh                 # Installation script
+└── README.md                  # This file
 
-/etc/mcp-kali/                 # Configuration directory
-├── enroll.json               # Enrollment token (root only)
-├── credentials.json          # API credentials (root only)
-└── scope.json               # Scope configuration
+# Runtime Configuration & Data
+~/.mcp-kali/                   # User configuration directory
+├── credentials.json           # API credentials
+├── enroll.json               # Enrollment tokens
+├── scope.json                # Security scope configuration
+├── memory/                   # Memory database
+│   └── observations.db       # SQLite database
+└── audit/                    # Audit logs
+    └── audit.db              # Audit trail database
 
-/var/lib/mcp/                 # Data directory
+# Artifact Storage
+/var/lib/mcp/                 # System-wide data directory
 ├── artifacts/               # Tool output storage
 │   └── {server-id}/
 │       └── {run-id}/
@@ -724,8 +821,8 @@ Metasploit auxiliary modules for scanning, enumeration, and reconnaissance.
 │           ├── summary.txt   # Auto-generated summary
 │           ├── parsed.json   # Parsed structured data
 │           └── metadata.json # Artifact metadata
-└── memory/                  # Memory database
-    └── observations.db      # SQLite database
+└── logs/                    # System logs
+    └── server.log           # Server operation logs
 ```
 
 ## Service Management

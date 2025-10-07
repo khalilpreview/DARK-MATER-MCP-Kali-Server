@@ -1,0 +1,94 @@
+{
+  "timestamp": "2025-10-07T07:37:28.694713",
+  "total_tests": 14,
+  "passed": 4,
+  "failed": 10,
+  "skipped": 0,
+  "test_results": [
+    {
+      "category": "unit",
+      "file": "test_schema.py",
+      "success": true,
+      "output": ""
+    },
+    {
+      "category": "unit",
+      "file": "test_schema_validation.py",
+      "success": false,
+      "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\unit\\test_schema_validation.py\", line 68, in <module>\n    test_schema()\n    ~~~~~~~~~~~^^\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\unit\\test_schema_validation.py\", line 13, in test_schema\n    print(f'\\U0001f4cb Testing schema file: {schema_path}')\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Preview"
+    },
+    {
+      "category": "unit",
+      "file": "test_server.py",
+      "success": false,
+      "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\unit\\test_server.py\", line 193, in <module>\n    test_server()\n    ~~~~~~~~~~~^^\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\unit\\test_server.py\", line 31, in test_server\n    print_colored(\"\\U0001f9ea DARK MATER MCP Server Test\", \"cyan\")\n    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Preview Lab\\On"
+    },
+    {
+      "category": "integration",
+      "file": "test_5001.py",
+      "success": false,
+      "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_5001.py\", line 48, in <module>\n    test_server_5001()\n    ~~~~~~~~~~~~~~~~^^\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_5001.py\", line 14, in test_server_5001\n    print('\\U0001f504 Testing MCP Server on port 5001...')\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Previe"
+    },
+    {
+      "category": "integration",
+      "file": "test_llm_config.py",
+      "success": false,
+      "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_llm_config.py\", line 179, in <module>\n    success = test_llm_config()\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_llm_config.py\", line 12, in test_llm_config\n    print(\"\\U0001f9ea LLM Configuration System Test\")\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Preview Lab\\AppDat"
+    },
+    {
+      "category": "integration",
+      "file": "test_llm_config_enhanced.py",
+      "success": true,
+      "output": ""
+    },
+    {
+      "category": "integration",
+      "file": "test_production_api.py",
+      "success": false,
+      "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_production_api.py\", line 413, in main\n    with open(args.enroll_file, 'r') as f:\n         ~~~~^^^^^^^^^^^^^^^^^^^^^^^\nFileNotFoundError: [Errno 2] No such file or directory: '/etc/mcp-kali/enroll.json'\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New "
+    },
+    {
+      "category": "integration",
+      "file": "test_production_api_enhanced.py",
+      "success": true,
+      "output": ""
+    },
+    {
+      "category": "integration",
+      "file": "test_servers.py",
+      "success": false,
+      "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_servers.py\", line 62, in <module>\n    test_mcp_servers()\n    ~~~~~~~~~~~~~~~~^^\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_servers.py\", line 45, in test_mcp_servers\n    print('\\U0001f50d Testing MCP Servers with API Key')\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\Prev"
+    },
+    {
+      "category": "integration",
+      "file": "test_server_live.py",
+      "success": false,
+      "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_server_live.py\", line 107, in <module>\n    main()\n    ~~~~^^\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_server_live.py\", line 85, in main\n    server_proc = start_server()\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\integration\\test_server_live.p"
+    },
+    {
+      "category": "acceptance",
+      "file": "test_complete_live.py",
+      "success": false,
+      "output": "MCP KALI SERVER - COMPREHENSIVE LIVE TEST\n============================================================\nStarted: 2025-10-07 07:37:43\nAPI Key: dk_U8BE1DBs0bOuSGIyc7e0xgqUD_goVqJOCI38ICSnCt4\nBase URL: http://127.0.0.1:5001\n============================================================\nStarting MCP Kali Server...\n==================================================\nWaiting for server to start...\nServer is ready! (attempt 1)\n\\n1. HEALTH CHECK\n------------------------------\nStatus: 200\nServer ID: kali-Pre"
+    },
+    {
+      "category": "acceptance",
+      "file": "test_complete_live_enhanced.py",
+      "success": true,
+      "output": ""
+    },
+    {
+      "category": "system",
+      "file": "test_llm_integration.py",
+      "success": false,
+      "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\test_llm_integration.py\", line 5, in <module>\n    import pytest\nModuleNotFoundError: No module named 'pytest'\n"
+    },
+    {
+      "category": "system",
+      "file": "test_llm_system.py",
+      "success": false,
+      "output": "Traceback (most recent call last):\n  File \"C:\\Users\\Preview Lab\\OneDrive\\Desktop\\New Projects\\DARK Mater MCP Kali Linux\\tests\\test_llm_system.py\", line 5, in <module>\n    import pytest\nModuleNotFoundError: No module named 'pytest'\n"
+    }
+  ],
+  "summary": "10 tests failed - review required"
+}
